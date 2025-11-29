@@ -252,18 +252,27 @@ fun BearingFinderWorkspace(
                 
                 Spacer(modifier = Modifier.height(24.dp))
                 
+                // Validation helper
+                val isValidInput = innerDiameter.toDoubleOrNull()?.let { it > 0 } == true &&
+                        outerDiameter.toDoubleOrNull()?.let { it > 0 } == true &&
+                        width.toDoubleOrNull()?.let { it > 0 } == true &&
+                        tolerance.toDoubleOrNull()?.let { it > 0 } == true &&
+                        (innerDiameter.toDoubleOrNull() ?: 0.0) < (outerDiameter.toDoubleOrNull() ?: 0.0)
+                
                 // Search button
                 Button(
                     onClick = {
-                        val id = innerDiameter.toDoubleOrNull() ?: 0.0
-                        val od = outerDiameter.toDoubleOrNull() ?: 0.0
-                        val w = width.toDoubleOrNull() ?: 0.0
+                        val id = innerDiameter.toDoubleOrNull() ?: return@Button
+                        val od = outerDiameter.toDoubleOrNull() ?: return@Button
+                        val w = width.toDoubleOrNull() ?: return@Button
                         val tol = tolerance.toDoubleOrNull() ?: 0.5
                         onSearchBearing(id, od, w, tol)
                     },
                     modifier = Modifier.fillMaxWidth(),
+                    enabled = isValidInput,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = TechAssistColors.Primary
+                        containerColor = TechAssistColors.Primary,
+                        disabledContainerColor = TechAssistColors.Primary.copy(alpha = 0.3f)
                     ),
                     shape = RoundedCornerShape(8.dp)
                 ) {

@@ -266,7 +266,7 @@ class ExcelService(private val context: Context) {
         options.inJustDecodeBounds = false
         
         val bitmap = BitmapFactory.decodeFile(imagePath, options)
-            ?: throw IllegalStateException("Could not decode image: $imagePath")
+            ?: throw IllegalStateException("Could not decode image - file may be corrupted or unsupported format: $imagePath")
         
         // Resize if still too large
         val scaledBitmap = if (bitmap.width > MAX_IMAGE_DIMENSION || bitmap.height > MAX_IMAGE_DIMENSION) {
@@ -277,7 +277,9 @@ class ExcelService(private val context: Context) {
             val newWidth = (bitmap.width * scale).toInt()
             val newHeight = (bitmap.height * scale).toInt()
             Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true).also {
-                if (it != bitmap) bitmap.recycle()
+                if (it != bitmap && !bitmap.isRecycled) {
+                    bitmap.recycle()
+                }
             }
         } else {
             bitmap
@@ -294,7 +296,9 @@ class ExcelService(private val context: Context) {
             quality -= 10
         } while (compressedBytes.size > MAX_IMAGE_SIZE_KB * 1024 && quality > 10)
         
-        scaledBitmap.recycle()
+        if (!scaledBitmap.isRecycled) {
+            scaledBitmap.recycle()
+        }
         
         return compressedBytes
     }

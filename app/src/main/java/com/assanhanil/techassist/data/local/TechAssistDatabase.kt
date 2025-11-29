@@ -10,7 +10,6 @@ import com.assanhanil.techassist.data.local.dao.ReportDao
 import com.assanhanil.techassist.data.local.entity.BearingEntity
 import com.assanhanil.techassist.data.local.entity.RecipeEntity
 import com.assanhanil.techassist.data.local.entity.ReportEntity
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -58,8 +57,13 @@ abstract class TechAssistDatabase : RoomDatabase() {
         override fun onCreate(db: SupportSQLiteDatabase) {
             super.onCreate(db)
             INSTANCE?.let { database ->
-                CoroutineScope(Dispatchers.IO).launch {
-                    populateBearingData(database.bearingDao())
+                // Use a limited scope that completes when the database operation is done
+                kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
+                    try {
+                        populateBearingData(database.bearingDao())
+                    } catch (_: Exception) {
+                        // Silently handle any errors during initial population
+                    }
                 }
             }
         }

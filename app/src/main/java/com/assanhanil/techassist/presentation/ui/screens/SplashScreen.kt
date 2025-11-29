@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.sp
 import com.assanhanil.techassist.presentation.ui.theme.TechAssistColors
 import kotlinx.coroutines.delay
 
+private const val SPLASH_DURATION_MS = 2500L
+
 /**
  * Animated Splash Screen for ASSANHANİL BURSA.
  * 
@@ -80,7 +82,7 @@ fun SplashScreen(
     // Start animation and navigate after delay
     LaunchedEffect(key1 = true) {
         startAnimation = true
-        delay(2500) // Show splash for 2.5 seconds
+        delay(SPLASH_DURATION_MS)
         onSplashComplete()
     }
     
