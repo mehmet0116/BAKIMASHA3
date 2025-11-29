@@ -18,7 +18,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.assanhanil.techassist.presentation.ui.components.GlassCard
 import com.assanhanil.techassist.presentation.ui.components.NeonCard
-import com.assanhanil.techassist.presentation.ui.theme.TechAssistColors
+import com.assanhanil.techassist.presentation.ui.theme.LocalThemeColors
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -35,12 +35,13 @@ import kotlin.math.sqrt
 fun ElectricalWizardScreen(
     modifier: Modifier = Modifier
 ) {
+    val themeColors = LocalThemeColors.current
     var selectedCalculator by remember { mutableStateOf(0) }
     
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(TechAssistColors.Background)
+            .background(themeColors.background)
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
     ) {
@@ -48,7 +49,7 @@ fun ElectricalWizardScreen(
         Text(
             text = "Elektrik Sihirbazı",
             style = MaterialTheme.typography.headlineSmall,
-            color = TechAssistColors.Primary,
+            color = themeColors.primary,
             fontWeight = FontWeight.Bold
         )
         
@@ -57,7 +58,7 @@ fun ElectricalWizardScreen(
         Text(
             text = "Elektrik hesaplamaları ve kablo boyutlandırma",
             style = MaterialTheme.typography.bodyMedium,
-            color = TechAssistColors.TextSecondary
+            color = themeColors.textSecondary
         )
         
         Spacer(modifier = Modifier.height(24.dp))
@@ -105,16 +106,18 @@ private fun CalculatorTab(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val themeColors = LocalThemeColors.current
+    
     val backgroundColor = if (isSelected) {
-        TechAssistColors.Primary
+        themeColors.primary
     } else {
-        TechAssistColors.Surface
+        themeColors.surface
     }
     
     val textColor = if (isSelected) {
-        TechAssistColors.Background
+        themeColors.background
     } else {
-        TechAssistColors.TextSecondary
+        themeColors.textSecondary
     }
     
     Button(
@@ -138,6 +141,8 @@ private fun CalculatorTab(
  */
 @Composable
 private fun OhmLawCalculator() {
+    val themeColors = LocalThemeColors.current
+    
     var voltage by remember { mutableStateOf("") }
     var current by remember { mutableStateOf("") }
     var resistance by remember { mutableStateOf("") }
@@ -152,7 +157,7 @@ private fun OhmLawCalculator() {
             Text(
                 text = "Ohm Yasası Hesaplayıcı",
                 style = MaterialTheme.typography.titleMedium,
-                color = TechAssistColors.Primary,
+                color = themeColors.primary,
                 fontWeight = FontWeight.Bold
             )
             
@@ -161,7 +166,7 @@ private fun OhmLawCalculator() {
             Text(
                 text = "V = I × R formülü ile hesaplama yapın. İki değer girin, üçüncüsü hesaplanacak.",
                 style = MaterialTheme.typography.bodySmall,
-                color = TechAssistColors.TextSecondary
+                color = themeColors.textSecondary
             )
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -175,10 +180,10 @@ private fun OhmLawCalculator() {
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
-                suffix = { Text("V", color = TechAssistColors.TextSecondary) },
+                suffix = { Text("V", color = themeColors.textSecondary) },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = TechAssistColors.Primary,
-                    unfocusedBorderColor = TechAssistColors.GlassBorder
+                    focusedBorderColor = themeColors.primary,
+                    unfocusedBorderColor = themeColors.glassBorder
                 )
             )
             
@@ -193,10 +198,10 @@ private fun OhmLawCalculator() {
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
-                suffix = { Text("A", color = TechAssistColors.TextSecondary) },
+                suffix = { Text("A", color = themeColors.textSecondary) },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = TechAssistColors.Primary,
-                    unfocusedBorderColor = TechAssistColors.GlassBorder
+                    focusedBorderColor = themeColors.primary,
+                    unfocusedBorderColor = themeColors.glassBorder
                 )
             )
             
@@ -211,10 +216,10 @@ private fun OhmLawCalculator() {
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
-                suffix = { Text("Ω", color = TechAssistColors.TextSecondary) },
+                suffix = { Text("Ω", color = themeColors.textSecondary) },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = TechAssistColors.Primary,
-                    unfocusedBorderColor = TechAssistColors.GlassBorder
+                    focusedBorderColor = themeColors.primary,
+                    unfocusedBorderColor = themeColors.glassBorder
                 )
             )
             
@@ -247,7 +252,7 @@ private fun OhmLawCalculator() {
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = TechAssistColors.Primary
+                    containerColor = themeColors.primary
                 ),
                 shape = RoundedCornerShape(8.dp)
             ) {
@@ -268,7 +273,7 @@ private fun OhmLawCalculator() {
                     Text(
                         text = it,
                         style = MaterialTheme.typography.titleMedium,
-                        color = TechAssistColors.Secondary,
+                        color = themeColors.secondary,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(16.dp)
                     )
@@ -283,6 +288,8 @@ private fun OhmLawCalculator() {
  */
 @Composable
 private fun PowerCalculator() {
+    val themeColors = LocalThemeColors.current
+    
     var voltage by remember { mutableStateOf("") }
     var current by remember { mutableStateOf("") }
     var power by remember { mutableStateOf("") }
@@ -298,7 +305,7 @@ private fun PowerCalculator() {
             Text(
                 text = "Güç Hesaplayıcı",
                 style = MaterialTheme.typography.titleMedium,
-                color = TechAssistColors.Primary,
+                color = themeColors.primary,
                 fontWeight = FontWeight.Bold
             )
             
@@ -307,7 +314,7 @@ private fun PowerCalculator() {
             Text(
                 text = "P = V × I × cos(φ) formülü ile güç hesaplama",
                 style = MaterialTheme.typography.bodySmall,
-                color = TechAssistColors.TextSecondary
+                color = themeColors.textSecondary
             )
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -320,10 +327,10 @@ private fun PowerCalculator() {
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
-                suffix = { Text("V", color = TechAssistColors.TextSecondary) },
+                suffix = { Text("V", color = themeColors.textSecondary) },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = TechAssistColors.Primary,
-                    unfocusedBorderColor = TechAssistColors.GlassBorder
+                    focusedBorderColor = themeColors.primary,
+                    unfocusedBorderColor = themeColors.glassBorder
                 )
             )
             
@@ -337,10 +344,10 @@ private fun PowerCalculator() {
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
-                suffix = { Text("A", color = TechAssistColors.TextSecondary) },
+                suffix = { Text("A", color = themeColors.textSecondary) },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = TechAssistColors.Primary,
-                    unfocusedBorderColor = TechAssistColors.GlassBorder
+                    focusedBorderColor = themeColors.primary,
+                    unfocusedBorderColor = themeColors.glassBorder
                 )
             )
             
@@ -355,8 +362,8 @@ private fun PowerCalculator() {
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = TechAssistColors.Primary,
-                    unfocusedBorderColor = TechAssistColors.GlassBorder
+                    focusedBorderColor = themeColors.primary,
+                    unfocusedBorderColor = themeColors.glassBorder
                 )
             )
             
@@ -384,7 +391,7 @@ private fun PowerCalculator() {
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = TechAssistColors.Primary
+                    containerColor = themeColors.primary
                 ),
                 shape = RoundedCornerShape(8.dp)
             ) {
@@ -405,7 +412,7 @@ private fun PowerCalculator() {
                     Text(
                         text = it,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TechAssistColors.Secondary,
+                        color = themeColors.secondary,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(16.dp)
                     )
@@ -420,6 +427,8 @@ private fun PowerCalculator() {
  */
 @Composable
 private fun CableSizeCalculator() {
+    val themeColors = LocalThemeColors.current
+    
     var current by remember { mutableStateOf("") }
     var voltage by remember { mutableStateOf("380") }
     var length by remember { mutableStateOf("") }
@@ -454,7 +463,7 @@ private fun CableSizeCalculator() {
             Text(
                 text = "Kablo Kesit Hesaplayıcı",
                 style = MaterialTheme.typography.titleMedium,
-                color = TechAssistColors.Primary,
+                color = themeColors.primary,
                 fontWeight = FontWeight.Bold
             )
             
@@ -463,7 +472,7 @@ private fun CableSizeCalculator() {
             Text(
                 text = "Akım taşıma kapasitesi ve gerilim düşümüne göre kablo kesiti hesapla",
                 style = MaterialTheme.typography.bodySmall,
-                color = TechAssistColors.TextSecondary
+                color = themeColors.textSecondary
             )
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -476,10 +485,10 @@ private fun CableSizeCalculator() {
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
-                suffix = { Text("A", color = TechAssistColors.TextSecondary) },
+                suffix = { Text("A", color = themeColors.textSecondary) },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = TechAssistColors.Primary,
-                    unfocusedBorderColor = TechAssistColors.GlassBorder
+                    focusedBorderColor = themeColors.primary,
+                    unfocusedBorderColor = themeColors.glassBorder
                 )
             )
             
@@ -493,10 +502,10 @@ private fun CableSizeCalculator() {
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
-                suffix = { Text("V", color = TechAssistColors.TextSecondary) },
+                suffix = { Text("V", color = themeColors.textSecondary) },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = TechAssistColors.Primary,
-                    unfocusedBorderColor = TechAssistColors.GlassBorder
+                    focusedBorderColor = themeColors.primary,
+                    unfocusedBorderColor = themeColors.glassBorder
                 )
             )
             
@@ -510,10 +519,10 @@ private fun CableSizeCalculator() {
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
-                suffix = { Text("m", color = TechAssistColors.TextSecondary) },
+                suffix = { Text("m", color = themeColors.textSecondary) },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = TechAssistColors.Primary,
-                    unfocusedBorderColor = TechAssistColors.GlassBorder
+                    focusedBorderColor = themeColors.primary,
+                    unfocusedBorderColor = themeColors.glassBorder
                 )
             )
             
@@ -527,10 +536,10 @@ private fun CableSizeCalculator() {
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
-                suffix = { Text("%", color = TechAssistColors.TextSecondary) },
+                suffix = { Text("%", color = themeColors.textSecondary) },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = TechAssistColors.Primary,
-                    unfocusedBorderColor = TechAssistColors.GlassBorder
+                    focusedBorderColor = themeColors.primary,
+                    unfocusedBorderColor = themeColors.glassBorder
                 )
             )
             
@@ -605,7 +614,7 @@ private fun CableSizeCalculator() {
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = TechAssistColors.Primary
+                    containerColor = themeColors.primary
                 ),
                 shape = RoundedCornerShape(8.dp)
             ) {
@@ -626,7 +635,7 @@ private fun CableSizeCalculator() {
                     Text(
                         text = it,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TechAssistColors.Secondary,
+                        color = themeColors.secondary,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(16.dp)
                     )

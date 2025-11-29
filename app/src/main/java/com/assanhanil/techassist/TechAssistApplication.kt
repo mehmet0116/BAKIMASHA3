@@ -2,6 +2,7 @@ package com.assanhanil.techassist
 
 import android.app.Application
 import com.assanhanil.techassist.data.local.TechAssistDatabase
+import com.assanhanil.techassist.data.preferences.ThemePreferences
 import com.assanhanil.techassist.data.repository.BearingRepositoryImpl
 import com.assanhanil.techassist.domain.repository.BearingRepository
 
@@ -19,6 +20,11 @@ class TechAssistApplication : Application() {
     // Repositories
     val bearingRepository: BearingRepository by lazy {
         BearingRepositoryImpl(database.bearingDao())
+    }
+    
+    // Theme Preferences
+    val themePreferences: ThemePreferences by lazy {
+        ThemePreferences(this)
     }
 
     override fun onCreate() {

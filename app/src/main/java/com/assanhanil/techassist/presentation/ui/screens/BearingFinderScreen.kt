@@ -24,7 +24,7 @@ import com.assanhanil.techassist.domain.model.BearingSearchResult
 import com.assanhanil.techassist.presentation.ui.components.GlassCard
 import com.assanhanil.techassist.presentation.ui.components.NeonCard
 import com.assanhanil.techassist.presentation.ui.components.SplitViewLayout
-import com.assanhanil.techassist.presentation.ui.theme.TechAssistColors
+import com.assanhanil.techassist.presentation.ui.theme.LocalThemeColors
 
 /**
  * Visual Bearing Finder Screen.
@@ -64,6 +64,8 @@ fun BearingFinderScreen(
 fun BearingDiagram(
     modifier: Modifier = Modifier
 ) {
+    val themeColors = LocalThemeColors.current
+    
     GlassCard(
         modifier = modifier.padding(16.dp)
     ) {
@@ -77,7 +79,7 @@ fun BearingDiagram(
             Text(
                 text = "Rulman Boyutları",
                 style = MaterialTheme.typography.titleMedium,
-                color = TechAssistColors.Primary,
+                color = themeColors.primary,
                 fontWeight = FontWeight.Bold
             )
             
@@ -88,10 +90,10 @@ fun BearingDiagram(
                 modifier = Modifier
                     .size(200.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(TechAssistColors.SurfaceVariant)
+                    .background(themeColors.surfaceVariant)
                     .border(
                         width = 2.dp,
-                        color = TechAssistColors.Primary.copy(alpha = 0.5f),
+                        color = themeColors.primary.copy(alpha = 0.5f),
                         shape = RoundedCornerShape(8.dp)
                     ),
                 contentAlignment = Alignment.Center
@@ -101,10 +103,10 @@ fun BearingDiagram(
                     modifier = Modifier
                         .size(160.dp)
                         .clip(androidx.compose.foundation.shape.CircleShape)
-                        .background(TechAssistColors.CorporateGray)
+                        .background(themeColors.corporateGray)
                         .border(
                             width = 3.dp,
-                            color = TechAssistColors.Primary,
+                            color = themeColors.primary,
                             shape = androidx.compose.foundation.shape.CircleShape
                         ),
                     contentAlignment = Alignment.Center
@@ -114,10 +116,10 @@ fun BearingDiagram(
                         modifier = Modifier
                             .size(80.dp)
                             .clip(androidx.compose.foundation.shape.CircleShape)
-                            .background(TechAssistColors.Surface)
+                            .background(themeColors.surface)
                             .border(
                                 width = 2.dp,
-                                color = TechAssistColors.Secondary,
+                                color = themeColors.secondary,
                                 shape = androidx.compose.foundation.shape.CircleShape
                             ),
                         contentAlignment = Alignment.Center
@@ -127,7 +129,7 @@ fun BearingDiagram(
                             modifier = Modifier
                                 .size(40.dp)
                                 .clip(androidx.compose.foundation.shape.CircleShape)
-                                .background(TechAssistColors.Background)
+                                .background(themeColors.background)
                         )
                     }
                 }
@@ -140,11 +142,11 @@ fun BearingDiagram(
                 horizontalAlignment = Alignment.Start,
                 modifier = Modifier.padding(8.dp)
             ) {
-                DimensionLegend(color = TechAssistColors.Primary, label = "OD - Dış Çap")
+                DimensionLegend(color = themeColors.primary, label = "OD - Dış Çap")
                 Spacer(modifier = Modifier.height(4.dp))
-                DimensionLegend(color = TechAssistColors.Secondary, label = "ID - İç Çap")
+                DimensionLegend(color = themeColors.secondary, label = "ID - İç Çap")
                 Spacer(modifier = Modifier.height(4.dp))
-                DimensionLegend(color = TechAssistColors.TextSecondary, label = "W - Genişlik")
+                DimensionLegend(color = themeColors.textSecondary, label = "W - Genişlik")
             }
         }
     }
@@ -152,6 +154,8 @@ fun BearingDiagram(
 
 @Composable
 private fun DimensionLegend(color: Color, label: String) {
+    val themeColors = LocalThemeColors.current
+    
     Row(
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -164,7 +168,7 @@ private fun DimensionLegend(color: Color, label: String) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = TechAssistColors.TextSecondary
+            color = themeColors.textSecondary
         )
     }
 }
@@ -178,6 +182,8 @@ fun BearingFinderWorkspace(
     searchResult: BearingSearchResult?,
     modifier: Modifier = Modifier
 ) {
+    val themeColors = LocalThemeColors.current
+    
     var innerDiameter by remember { mutableStateOf("") }
     var outerDiameter by remember { mutableStateOf("") }
     var width by remember { mutableStateOf("") }
@@ -191,7 +197,7 @@ fun BearingFinderWorkspace(
         Text(
             text = "Görsel Rulman Bulucu",
             style = MaterialTheme.typography.headlineSmall,
-            color = TechAssistColors.Primary,
+            color = themeColors.primary,
             fontWeight = FontWeight.Bold
         )
         
@@ -200,7 +206,7 @@ fun BearingFinderWorkspace(
         Text(
             text = "ISO kodunu bulmak için ölçülen boyutları girin",
             style = MaterialTheme.typography.bodyMedium,
-            color = TechAssistColors.TextSecondary
+            color = themeColors.textSecondary
         )
         
         Spacer(modifier = Modifier.height(24.dp))
@@ -271,8 +277,8 @@ fun BearingFinderWorkspace(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = isValidInput,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = TechAssistColors.Primary,
-                        disabledContainerColor = TechAssistColors.Primary.copy(alpha = 0.3f)
+                        containerColor = themeColors.primary,
+                        disabledContainerColor = themeColors.primary.copy(alpha = 0.3f)
                     ),
                     shape = RoundedCornerShape(8.dp)
                 ) {
@@ -306,27 +312,31 @@ private fun DimensionInputField(
     label: String,
     placeholder: String
 ) {
+    val themeColors = LocalThemeColors.current
+    
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
-        placeholder = { Text(placeholder, color = TechAssistColors.TextDisabled) },
+        placeholder = { Text(placeholder, color = themeColors.textDisabled) },
         modifier = Modifier.fillMaxWidth(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         singleLine = true,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = TechAssistColors.Primary,
-            unfocusedBorderColor = TechAssistColors.GlassBorder,
-            focusedLabelColor = TechAssistColors.Primary,
-            unfocusedLabelColor = TechAssistColors.TextSecondary,
-            cursorColor = TechAssistColors.Primary
+            focusedBorderColor = themeColors.primary,
+            unfocusedBorderColor = themeColors.glassBorder,
+            focusedLabelColor = themeColors.primary,
+            unfocusedLabelColor = themeColors.textSecondary,
+            cursorColor = themeColors.primary
         ),
-        suffix = { Text("mm", color = TechAssistColors.TextSecondary) }
+        suffix = { Text("mm", color = themeColors.textSecondary) }
     )
 }
 
 @Composable
 private fun SearchResultCard(result: BearingSearchResult) {
+    val themeColors = LocalThemeColors.current
+    
     GlassCard(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -336,7 +346,7 @@ private fun SearchResultCard(result: BearingSearchResult) {
             Text(
                 text = "Arama Sonuçları",
                 style = MaterialTheme.typography.titleMedium,
-                color = TechAssistColors.Primary,
+                color = themeColors.primary,
                 fontWeight = FontWeight.Bold
             )
             
@@ -353,14 +363,14 @@ private fun SearchResultCard(result: BearingSearchResult) {
                     Text(
                         text = result.message,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TechAssistColors.Warning
+                        color = themeColors.warning
                     )
                 }
                 is BearingSearchResult.Error -> {
                     Text(
                         text = "Hata: ${result.exception.message}",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TechAssistColors.Error
+                        color = themeColors.error
                     )
                 }
             }
@@ -370,10 +380,12 @@ private fun SearchResultCard(result: BearingSearchResult) {
 
 @Composable
 private fun BearingResultItem(bearing: Bearing) {
+    val themeColors = LocalThemeColors.current
+    
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = TechAssistColors.Surface
+            containerColor = themeColors.surface
         ),
         shape = RoundedCornerShape(8.dp)
     ) {
@@ -388,14 +400,14 @@ private fun BearingResultItem(bearing: Bearing) {
                 Text(
                     text = bearing.isoCode,
                     style = MaterialTheme.typography.titleLarge,
-                    color = TechAssistColors.Primary,
+                    color = themeColors.primary,
                     fontWeight = FontWeight.Bold
                 )
                 
                 Text(
                     text = bearing.sealType,
                     style = MaterialTheme.typography.labelMedium,
-                    color = TechAssistColors.Secondary
+                    color = themeColors.secondary
                 )
             }
             
@@ -404,7 +416,7 @@ private fun BearingResultItem(bearing: Bearing) {
             Text(
                 text = bearing.type,
                 style = MaterialTheme.typography.bodyMedium,
-                color = TechAssistColors.TextSecondary
+                color = themeColors.textSecondary
             )
             
             Spacer(modifier = Modifier.height(8.dp))
@@ -423,18 +435,20 @@ private fun BearingResultItem(bearing: Bearing) {
 
 @Composable
 private fun DimensionChip(label: String, value: String) {
+    val themeColors = LocalThemeColors.current
+    
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = TechAssistColors.TextDisabled
+            color = themeColors.textDisabled
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
-            color = TechAssistColors.TextPrimary,
+            color = themeColors.textPrimary,
             fontWeight = FontWeight.Medium
         )
     }

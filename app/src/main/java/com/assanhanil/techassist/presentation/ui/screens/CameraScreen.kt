@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.assanhanil.techassist.presentation.ui.components.GlassCard
 import com.assanhanil.techassist.presentation.ui.components.NeonCard
-import com.assanhanil.techassist.presentation.ui.theme.TechAssistColors
+import com.assanhanil.techassist.presentation.ui.theme.LocalThemeColors
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -49,6 +49,7 @@ import java.util.*
 fun CameraScreen(
     modifier: Modifier = Modifier
 ) {
+    val themeColors = LocalThemeColors.current
     val context = LocalContext.current
     var hasCameraPermission by remember {
         mutableStateOf(
@@ -95,14 +96,14 @@ fun CameraScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(TechAssistColors.Background)
+            .background(themeColors.background)
             .padding(16.dp)
     ) {
         // Header
         Text(
             text = "Akıllı Kamera",
             style = MaterialTheme.typography.headlineSmall,
-            color = TechAssistColors.Primary,
+            color = themeColors.primary,
             fontWeight = FontWeight.Bold
         )
         
@@ -111,7 +112,7 @@ fun CameraScreen(
         Text(
             text = "Fotoğraf çekin ve not ekleyin",
             style = MaterialTheme.typography.bodyMedium,
-            color = TechAssistColors.TextSecondary
+            color = themeColors.textSecondary
         )
         
         Spacer(modifier = Modifier.height(24.dp))
@@ -139,14 +140,14 @@ fun CameraScreen(
                     modifier = Modifier
                         .size(64.dp)
                         .clip(CircleShape)
-                        .background(TechAssistColors.Primary.copy(alpha = 0.2f))
-                        .border(2.dp, TechAssistColors.Primary, CircleShape),
+                        .background(themeColors.primary.copy(alpha = 0.2f))
+                        .border(2.dp, themeColors.primary, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.CameraAlt,
                         contentDescription = "Fotoğraf Çek",
-                        tint = TechAssistColors.Primary,
+                        tint = themeColors.primary,
                         modifier = Modifier.size(32.dp)
                     )
                 }
@@ -157,13 +158,13 @@ fun CameraScreen(
                     Text(
                         text = "Fotoğraf Çek",
                         style = MaterialTheme.typography.titleMedium,
-                        color = TechAssistColors.TextPrimary,
+                        color = themeColors.textPrimary,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = if (hasCameraPermission) "Dokunarak çekim yapın" else "İzin gerekli",
                         style = MaterialTheme.typography.bodySmall,
-                        color = TechAssistColors.TextSecondary
+                        color = themeColors.textSecondary
                     )
                 }
             }
@@ -180,7 +181,7 @@ fun CameraScreen(
             Text(
                 text = "Çekilen Fotoğraflar",
                 style = MaterialTheme.typography.titleMedium,
-                color = TechAssistColors.TextPrimary,
+                color = themeColors.textPrimary,
                 fontWeight = FontWeight.Medium
             )
             
@@ -188,7 +189,7 @@ fun CameraScreen(
                 Text(
                     text = "${capturedPhotos.size} fotoğraf",
                     style = MaterialTheme.typography.bodySmall,
-                    color = TechAssistColors.TextDisabled
+                    color = themeColors.textDisabled
                 )
             }
         }
@@ -208,20 +209,20 @@ fun CameraScreen(
                     Icon(
                         imageVector = Icons.Default.PhotoLibrary,
                         contentDescription = null,
-                        tint = TechAssistColors.TextDisabled,
+                        tint = themeColors.textDisabled,
                         modifier = Modifier.size(48.dp)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "Henüz fotoğraf çekilmedi",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = TechAssistColors.TextDisabled
+                        color = themeColors.textDisabled
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Yukarıdaki butona dokunarak fotoğraf çekin",
                         style = MaterialTheme.typography.bodySmall,
-                        color = TechAssistColors.TextDisabled
+                        color = themeColors.textDisabled
                     )
                 }
             }
@@ -280,6 +281,8 @@ private fun PhotoCard(
     onAddNote: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val themeColors = LocalThemeColors.current
+    
     GlassCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -309,7 +312,7 @@ private fun PhotoCard(
                 Text(
                     text = "Fotoğraf #${photo.id}",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = TechAssistColors.TextPrimary,
+                    color = themeColors.textPrimary,
                     fontWeight = FontWeight.Medium
                 )
                 
@@ -317,7 +320,7 @@ private fun PhotoCard(
                     text = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
                         .format(photo.timestamp),
                     style = MaterialTheme.typography.bodySmall,
-                    color = TechAssistColors.TextSecondary
+                    color = themeColors.textSecondary
                 )
                 
                 if (photo.note.isNotEmpty()) {
@@ -328,14 +331,14 @@ private fun PhotoCard(
                         Icon(
                             imageVector = Icons.Default.Note,
                             contentDescription = null,
-                            tint = TechAssistColors.Secondary,
+                            tint = themeColors.secondary,
                             modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = photo.note,
                             style = MaterialTheme.typography.bodySmall,
-                            color = TechAssistColors.Secondary,
+                            color = themeColors.secondary,
                             maxLines = 1
                         )
                     }
@@ -347,7 +350,7 @@ private fun PhotoCard(
                     Icon(
                         imageVector = if (photo.note.isEmpty()) Icons.Default.NoteAdd else Icons.Default.Edit,
                         contentDescription = "Not Ekle",
-                        tint = TechAssistColors.Primary
+                        tint = themeColors.primary
                     )
                 }
                 
@@ -355,7 +358,7 @@ private fun PhotoCard(
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "Sil",
-                        tint = TechAssistColors.Error
+                        tint = themeColors.error
                     )
                 }
             }
@@ -368,12 +371,14 @@ private fun PhotoDetailDialog(
     photo: CapturedPhoto,
     onDismiss: () -> Unit
 ) {
+    val themeColors = LocalThemeColors.current
+    
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
                 text = "Fotoğraf #${photo.id}",
-                color = TechAssistColors.Primary,
+                color = themeColors.primary,
                 fontWeight = FontWeight.Bold
             )
         },
@@ -394,7 +399,7 @@ private fun PhotoDetailDialog(
                 Text(
                     text = "Çekim Tarihi: ${SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault()).format(photo.timestamp)}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = TechAssistColors.TextSecondary
+                    color = themeColors.textSecondary
                 )
                 
                 if (photo.note.isNotEmpty()) {
@@ -402,12 +407,12 @@ private fun PhotoDetailDialog(
                     Text(
                         text = "Not:",
                         style = MaterialTheme.typography.labelMedium,
-                        color = TechAssistColors.TextSecondary
+                        color = themeColors.textSecondary
                     )
                     Text(
                         text = photo.note,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TechAssistColors.TextPrimary
+                        color = themeColors.textPrimary
                     )
                 }
             }
@@ -416,13 +421,13 @@ private fun PhotoDetailDialog(
             Button(
                 onClick = onDismiss,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = TechAssistColors.Primary
+                    containerColor = themeColors.primary
                 )
             ) {
                 Text("Kapat")
             }
         },
-        containerColor = TechAssistColors.Surface
+        containerColor = themeColors.surface
     )
 }
 
@@ -432,6 +437,7 @@ private fun AddNoteDialog(
     onDismiss: () -> Unit,
     onSave: (String) -> Unit
 ) {
+    val themeColors = LocalThemeColors.current
     var note by remember { mutableStateOf(currentNote) }
     
     AlertDialog(
@@ -439,7 +445,7 @@ private fun AddNoteDialog(
         title = {
             Text(
                 text = "Not Ekle",
-                color = TechAssistColors.Primary,
+                color = themeColors.primary,
                 fontWeight = FontWeight.Bold
             )
         },
@@ -453,8 +459,8 @@ private fun AddNoteDialog(
                 minLines = 3,
                 maxLines = 5,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = TechAssistColors.Primary,
-                    unfocusedBorderColor = TechAssistColors.GlassBorder
+                    focusedBorderColor = themeColors.primary,
+                    unfocusedBorderColor = themeColors.glassBorder
                 )
             )
         },
@@ -462,7 +468,7 @@ private fun AddNoteDialog(
             Button(
                 onClick = { onSave(note) },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = TechAssistColors.Primary
+                    containerColor = themeColors.primary
                 )
             ) {
                 Text("Kaydet")
@@ -470,10 +476,10 @@ private fun AddNoteDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("İptal", color = TechAssistColors.TextSecondary)
+                Text("İptal", color = themeColors.textSecondary)
             }
         },
-        containerColor = TechAssistColors.Surface
+        containerColor = themeColors.surface
     )
 }
 

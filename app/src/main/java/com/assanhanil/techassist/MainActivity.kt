@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -23,8 +24,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.assanhanil.techassist.data.preferences.ThemePreferences
 import com.assanhanil.techassist.presentation.ui.screens.*
-import com.assanhanil.techassist.presentation.ui.theme.TechAssistColors
+import com.assanhanil.techassist.presentation.ui.theme.LocalThemeColors
 import com.assanhanil.techassist.presentation.ui.theme.TechAssistTheme
 import com.assanhanil.techassist.presentation.viewmodel.BearingFinderViewModel
 import com.assanhanil.techassist.service.ExcelService
@@ -37,7 +39,7 @@ import kotlinx.coroutines.launch
  * - Jetpack Compose UI with Material 3
  * - Hamburger Menu (Drawer Navigation)
  * - Navigation between screens
- * - Industrial Dark Mode theme
+ * - Dynamic Dark/Light Mode theme support
  */
 class MainActivity : ComponentActivity() {
 
@@ -50,11 +52,21 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
+        val themePreferences = (application as TechAssistApplication).themePreferences
+        
         setContent {
-            TechAssistTheme {
+            val useSystemTheme by themePreferences.useSystemTheme.collectAsState()
+            val isDarkModePreference by themePreferences.isDarkMode.collectAsState()
+            val isSystemDarkTheme = isSystemInDarkTheme()
+            
+            val isDarkTheme = if (useSystemTheme) isSystemDarkTheme else isDarkModePreference
+            
+            TechAssistTheme(darkTheme = isDarkTheme) {
                 TechAssistApp(
                     bearingFinderViewModel = bearingFinderViewModel,
-                    excelService = ExcelService(this)
+                    excelService = ExcelService(this),
+                    themePreferences = themePreferences,
+                    isDarkMode = isDarkTheme
                 )
             }
         }
@@ -65,12 +77,15 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun TechAssistApp(
     bearingFinderViewModel: BearingFinderViewModel,
-    excelService: ExcelService
+    excelService: ExcelService,
+    themePreferences: ThemePreferences,
+    isDarkMode: Boolean
 ) {
     val navController = rememberNavController()
     var showSplash by remember { mutableStateOf(true) }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    val themeColors = LocalThemeColors.current
     
     if (showSplash) {
         SplashScreen(
@@ -81,8 +96,8 @@ fun TechAssistApp(
             drawerState = drawerState,
             drawerContent = {
                 ModalDrawerSheet(
-                    drawerContainerColor = TechAssistColors.Surface,
-                    drawerContentColor = TechAssistColors.TextPrimary
+                    drawerContainerColor = themeColors.surface,
+                    drawerContentColor = themeColors.textPrimary
                 ) {
                     DrawerContent(
                         navController = navController,
@@ -102,7 +117,7 @@ fun TechAssistApp(
                         title = {
                             Text(
                                 text = currentScreen?.title ?: "ASSANHANİL TECH-ASSIST",
-                                color = TechAssistColors.TextPrimary
+                                color = themeColors.textPrimary
                             )
                         },
                         navigationIcon = {
@@ -112,16 +127,16 @@ fun TechAssistApp(
                                 Icon(
                                     imageVector = Icons.Default.Menu,
                                     contentDescription = "Menü",
-                                    tint = TechAssistColors.Primary
+                                    tint = themeColors.primary
                                 )
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = TechAssistColors.Background
+                            containerColor = themeColors.background
                         )
                     )
                 },
-                containerColor = TechAssistColors.Background
+                containerColor = themeColors.background
             ) { paddingValues ->
                 NavHost(
                     navController = navController,
@@ -166,7 +181,14 @@ fun TechAssistApp(
                     }
                     
                     composable(Screen.Settings.route) {
-                        SettingsScreen()
+                        SettingsScreen(
+                            themePreferences = themePreferences,
+                            isDarkMode = isDarkMode
+                        )
+                    }
+                    
+                    composable(Screen.ExcelTemplateBuilder.route) {
+                        ExcelTemplateBuilderScreen(excelService = excelService)
                     }
                 }
             }
@@ -183,11 +205,12 @@ fun DrawerContent(
     onItemClick: () -> Unit
 ) {
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+    val themeColors = LocalThemeColors.current
     
     Column(
         modifier = Modifier
             .fillMaxHeight()
-            .background(TechAssistColors.Surface)
+            .background(themeColors.surface)
             .padding(16.dp)
     ) {
         // Header
@@ -203,18 +226,18 @@ fun DrawerContent(
                 Text(
                     text = "ASSANHANİL",
                     style = MaterialTheme.typography.headlineSmall,
-                    color = TechAssistColors.Primary,
+                    color = themeColors.primary,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = "TECH-ASSIST",
                     style = MaterialTheme.typography.titleMedium,
-                    color = TechAssistColors.TextSecondary
+                    color = themeColors.textSecondary
                 )
             }
         }
         
-        Divider(color = TechAssistColors.GlassBorder)
+        HorizontalDivider(color = themeColors.glassBorder)
         
         Spacer(modifier = Modifier.height(16.dp))
         
@@ -224,6 +247,7 @@ fun DrawerContent(
             Screen.BearingFinder,
             Screen.ElectricalWizard,
             Screen.Reports,
+            Screen.ExcelTemplateBuilder,
             Screen.Recipes,
             Screen.Camera,
             Screen.Settings
@@ -250,7 +274,7 @@ fun DrawerContent(
         Text(
             text = "Versiyon 1.0",
             style = MaterialTheme.typography.bodySmall,
-            color = TechAssistColors.TextDisabled,
+            color = themeColors.textDisabled,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
     }
@@ -262,16 +286,18 @@ private fun DrawerMenuItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val themeColors = LocalThemeColors.current
+    
     val backgroundColor = if (isSelected) {
-        TechAssistColors.Primary.copy(alpha = 0.15f)
+        themeColors.primary.copy(alpha = 0.15f)
     } else {
-        TechAssistColors.Surface
+        themeColors.surface
     }
     
     val contentColor = if (isSelected) {
-        TechAssistColors.Primary
+        themeColors.primary
     } else {
-        TechAssistColors.TextSecondary
+        themeColors.textSecondary
     }
     
     Row(
@@ -306,6 +332,7 @@ private fun getScreenFromRoute(route: String?): Screen? {
         Screen.BearingFinder.route -> Screen.BearingFinder
         Screen.ElectricalWizard.route -> Screen.ElectricalWizard
         Screen.Reports.route -> Screen.Reports
+        Screen.ExcelTemplateBuilder.route -> Screen.ExcelTemplateBuilder
         Screen.Recipes.route -> Screen.Recipes
         Screen.Camera.route -> Screen.Camera
         Screen.Settings.route -> Screen.Settings

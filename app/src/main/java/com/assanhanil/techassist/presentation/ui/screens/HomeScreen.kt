@@ -18,7 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.assanhanil.techassist.presentation.ui.components.GlassCard
 import com.assanhanil.techassist.presentation.ui.components.NeonCard
-import com.assanhanil.techassist.presentation.ui.theme.TechAssistColors
+import com.assanhanil.techassist.presentation.ui.theme.LocalThemeColors
 
 /**
  * Navigation destinations for the app.
@@ -28,6 +28,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object BearingFinder : Screen("bearing_finder", "Rulman Bulucu", Icons.Default.Search)
     data object ElectricalWizard : Screen("electrical_wizard", "Elektrik Sihirbazı", Icons.Default.Bolt)
     data object Reports : Screen("reports", "Raporlar", Icons.Default.Description)
+    data object ExcelTemplateBuilder : Screen("excel_template_builder", "Excel Şablon Oluşturucu", Icons.Default.TableChart)
     data object Recipes : Screen("recipes", "Tarifler", Icons.Default.Book)
     data object Camera : Screen("camera", "Kamera", Icons.Default.CameraAlt)
     data object Settings : Screen("settings", "Ayarlar", Icons.Default.Settings)
@@ -41,10 +42,13 @@ fun HomeScreen(
     onNavigate: (Screen) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val themeColors = LocalThemeColors.current
+    
     val menuItems = listOf(
         Screen.BearingFinder,
         Screen.ElectricalWizard,
         Screen.Reports,
+        Screen.ExcelTemplateBuilder,
         Screen.Recipes,
         Screen.Camera,
         Screen.Settings
@@ -53,21 +57,21 @@ fun HomeScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(TechAssistColors.Background)
+            .background(themeColors.background)
             .padding(16.dp)
     ) {
         // Header
         Text(
             text = "ASSANHANİL",
             style = MaterialTheme.typography.headlineMedium,
-            color = TechAssistColors.Primary,
+            color = themeColors.primary,
             fontWeight = FontWeight.Bold
         )
         
         Text(
             text = "TECH-ASSIST",
             style = MaterialTheme.typography.titleMedium,
-            color = TechAssistColors.TextSecondary
+            color = themeColors.textSecondary
         )
         
         Spacer(modifier = Modifier.height(8.dp))
@@ -75,7 +79,7 @@ fun HomeScreen(
         Text(
             text = "Dijital Saha Mühendisi Platformu",
             style = MaterialTheme.typography.bodyMedium,
-            color = TechAssistColors.TextDisabled
+            color = themeColors.textDisabled
         )
         
         Spacer(modifier = Modifier.height(24.dp))
@@ -112,6 +116,8 @@ private fun MenuCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val themeColors = LocalThemeColors.current
+    
     NeonCard(
         modifier = modifier
             .aspectRatio(1.2f)
@@ -127,7 +133,7 @@ private fun MenuCard(
             Icon(
                 imageVector = screen.icon,
                 contentDescription = screen.title,
-                tint = TechAssistColors.Primary,
+                tint = themeColors.primary,
                 modifier = Modifier.size(40.dp)
             )
             
@@ -136,7 +142,7 @@ private fun MenuCard(
             Text(
                 text = screen.title,
                 style = MaterialTheme.typography.titleSmall,
-                color = TechAssistColors.TextPrimary,
+                color = themeColors.textPrimary,
                 fontWeight = FontWeight.Medium
             )
         }

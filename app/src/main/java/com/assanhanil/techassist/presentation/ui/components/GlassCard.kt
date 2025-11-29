@@ -14,13 +14,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.assanhanil.techassist.presentation.ui.theme.TechAssistColors
+import com.assanhanil.techassist.presentation.ui.theme.LocalThemeColors
 
 /**
  * Glassmorphism Card Component.
  * Creates a frosted glass effect on menus and cards.
  * 
- * Design Philosophy: Futuristic, Industrial Dark Mode
+ * Design Philosophy: Futuristic, Dynamic Theme Support
  */
 @Composable
 fun GlassCard(
@@ -29,20 +29,22 @@ fun GlassCard(
     blurRadius: Dp = 10.dp,
     content: @Composable BoxScope.() -> Unit
 ) {
+    val themeColors = LocalThemeColors.current
+    
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(cornerRadius))
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        TechAssistColors.GlassBackground,
-                        TechAssistColors.GlassBackground.copy(alpha = 0.1f)
+                        themeColors.glassBackground,
+                        themeColors.glassBackground.copy(alpha = 0.1f)
                     )
                 )
             )
             .border(
                 width = 1.dp,
-                color = TechAssistColors.GlassBorder,
+                color = themeColors.glassBorder,
                 shape = RoundedCornerShape(cornerRadius)
             )
     ) {
@@ -56,21 +58,24 @@ fun GlassCard(
 @Composable
 fun NeonCard(
     modifier: Modifier = Modifier,
-    glowColor: Color = TechAssistColors.Primary,
+    glowColor: Color? = null,
     cornerRadius: Dp = 16.dp,
     content: @Composable BoxScope.() -> Unit
 ) {
+    val themeColors = LocalThemeColors.current
+    val actualGlowColor = glowColor ?: themeColors.primary
+    
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(cornerRadius))
-            .background(TechAssistColors.Surface)
+            .background(themeColors.surface)
             .border(
                 width = 2.dp,
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        glowColor,
-                        glowColor.copy(alpha = 0.5f),
-                        glowColor
+                        actualGlowColor,
+                        actualGlowColor.copy(alpha = 0.5f),
+                        actualGlowColor
                     )
                 ),
                 shape = RoundedCornerShape(cornerRadius)
@@ -89,13 +94,15 @@ fun IndustrialSurface(
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit
 ) {
+    val themeColors = LocalThemeColors.current
+    
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(8.dp))
-            .background(TechAssistColors.SurfaceVariant)
+            .background(themeColors.surfaceVariant)
             .border(
                 width = 1.dp,
-                color = TechAssistColors.CorporateGray,
+                color = themeColors.corporateGray,
                 shape = RoundedCornerShape(8.dp)
             )
     ) {
