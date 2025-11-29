@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BAKIMASHA3</string>
+    <string name="welcome_message">BAKIMASHA3\'e Hoş Geldiniz!</string>
+    <string name="app_description">Android Uygulaması</string>
+</resources>
