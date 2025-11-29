@@ -24,6 +24,7 @@ private fun VerticalDivider(
 ) {
     Box(
         modifier = modifier
+            .fillMaxHeight()
             .width(thickness)
             .background(color)
     )
