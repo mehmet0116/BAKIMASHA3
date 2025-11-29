@@ -217,13 +217,13 @@ class ExcelService(private val context: Context) {
                 anchorType = ClientAnchor.AnchorType.MOVE_AND_RESIZE
                 
                 // Set the cell where image starts (top-left corner)
-                col1 = column
-                row1 = row
+                setCol1(column)
+                setRow1(row)
                 
                 // Set the cell where image ends (bottom-right corner)
                 // Image will be contained within this single cell
-                col2 = column + 1
-                row2 = row + 1
+                setCol2(column + 1)
+                setRow2(row + 1)
                 
                 // Offset within the cell (in EMUs - English Metric Units)
                 // Small margin from cell edges
