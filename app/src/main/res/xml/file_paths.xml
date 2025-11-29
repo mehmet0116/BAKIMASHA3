@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- External files directory for Excel reports -->
+    <external-files-path
+        name="reports"
+        path="reports/" />
+    
+    <!-- Cache directory for temporary files -->
+    <cache-path
+        name="cache"
+        path="/" />
+</paths>
