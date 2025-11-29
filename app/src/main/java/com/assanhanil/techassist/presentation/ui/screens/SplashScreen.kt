@@ -169,7 +169,7 @@ fun SplashScreen(
             
             // Tagline
             Text(
-                text = "Operational Reporting System",
+                text = "Operasyonel Raporlama Sistemi",
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Normal,
                     letterSpacing = 2.sp
@@ -202,7 +202,7 @@ fun SplashScreen(
                 .alpha(taglineAlpha)
         ) {
             Text(
-                text = "Industrial Engineering Platform",
+                text = "Endüstriyel Mühendislik Platformu",
                 style = MaterialTheme.typography.bodySmall,
                 color = TechAssistColors.TextDisabled,
                 textAlign = TextAlign.Center

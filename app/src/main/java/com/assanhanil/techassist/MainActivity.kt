@@ -90,23 +90,23 @@ fun TechAssistApp(
             
             // Placeholder screens for other features
             composable(Screen.ElectricalWizard.route) {
-                PlaceholderScreen(title = "Electrical Wizard", subtitle = "Coming Soon")
+                PlaceholderScreen(title = "Elektrik Sihirbazı", subtitle = "Yakında")
             }
             
             composable(Screen.Reports.route) {
-                PlaceholderScreen(title = "Reports", subtitle = "Excel Report Generator")
+                PlaceholderScreen(title = "Raporlar", subtitle = "Excel Rapor Oluşturucu")
             }
             
             composable(Screen.Recipes.route) {
-                PlaceholderScreen(title = "Master Recipes", subtitle = "Maintenance Templates")
+                PlaceholderScreen(title = "Ana Tarifler", subtitle = "Bakım Şablonları")
             }
             
             composable(Screen.Camera.route) {
-                PlaceholderScreen(title = "Smart Camera", subtitle = "Photo Capture & Annotation")
+                PlaceholderScreen(title = "Akıllı Kamera", subtitle = "Fotoğraf Çekimi ve Not Ekleme")
             }
             
             composable(Screen.Settings.route) {
-                PlaceholderScreen(title = "Settings", subtitle = "App Configuration")
+                PlaceholderScreen(title = "Ayarlar", subtitle = "Uygulama Yapılandırması")
             }
         }
     }

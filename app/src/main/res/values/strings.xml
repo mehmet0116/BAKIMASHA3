@@ -2,35 +2,35 @@
 <resources>
     <string name="app_name">ASSANHANİL TECH-ASSIST</string>
     <string name="welcome_message">ASSANHANİL BURSA</string>
-    <string name="app_description">Operational Reporting System</string>
-    <string name="tagline">Digital Field Engineer Platform</string>
+    <string name="app_description">Operasyonel Raporlama Sistemi</string>
+    <string name="tagline">Dijital Saha Mühendisi Platformu</string>
     
-    <!-- Navigation -->
-    <string name="nav_home">Home</string>
-    <string name="nav_bearing_finder">Bearing Finder</string>
-    <string name="nav_electrical_wizard">Electrical Wizard</string>
-    <string name="nav_reports">Reports</string>
-    <string name="nav_recipes">Recipes</string>
-    <string name="nav_camera">Camera</string>
-    <string name="nav_settings">Settings</string>
+    <!-- Navigasyon -->
+    <string name="nav_home">Ana Sayfa</string>
+    <string name="nav_bearing_finder">Rulman Bulucu</string>
+    <string name="nav_electrical_wizard">Elektrik Sihirbazı</string>
+    <string name="nav_reports">Raporlar</string>
+    <string name="nav_recipes">Tarifler</string>
+    <string name="nav_camera">Kamera</string>
+    <string name="nav_settings">Ayarlar</string>
     
-    <!-- Bearing Finder -->
-    <string name="bearing_finder_title">Visual Bearing Finder</string>
-    <string name="bearing_finder_desc">Enter measured dimensions to find the ISO code</string>
-    <string name="inner_diameter">Inner Diameter (ID)</string>
-    <string name="outer_diameter">Outer Diameter (OD)</string>
-    <string name="width">Width (W)</string>
-    <string name="tolerance">Tolerance (±mm)</string>
-    <string name="find_bearing">Find Bearing</string>
-    <string name="search_results">Search Results</string>
+    <!-- Rulman Bulucu -->
+    <string name="bearing_finder_title">Görsel Rulman Bulucu</string>
+    <string name="bearing_finder_desc">ISO kodunu bulmak için ölçülen boyutları girin</string>
+    <string name="inner_diameter">İç Çap (ID)</string>
+    <string name="outer_diameter">Dış Çap (OD)</string>
+    <string name="width">Genişlik (W)</string>
+    <string name="tolerance">Tolerans (±mm)</string>
+    <string name="find_bearing">Rulman Bul</string>
+    <string name="search_results">Arama Sonuçları</string>
     
-    <!-- Units -->
+    <!-- Birimler -->
     <string name="unit_mm">mm</string>
     
-    <!-- Actions -->
-    <string name="action_search">Search</string>
-    <string name="action_save">Save</string>
-    <string name="action_cancel">Cancel</string>
-    <string name="action_export">Export</string>
-    <string name="action_capture">Capture</string>
+    <!-- Eylemler -->
+    <string name="action_search">Ara</string>
+    <string name="action_save">Kaydet</string>
+    <string name="action_cancel">İptal</string>
+    <string name="action_export">Dışa Aktar</string>
+    <string name="action_capture">Yakala</string>
 </resources>
