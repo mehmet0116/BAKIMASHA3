@@ -4,7 +4,13 @@ import android.app.Application
 import com.assanhanil.techassist.data.local.TechAssistDatabase
 import com.assanhanil.techassist.data.preferences.ThemePreferences
 import com.assanhanil.techassist.data.repository.BearingRepositoryImpl
+import com.assanhanil.techassist.data.repository.ExcelTemplateRepositoryImpl
+import com.assanhanil.techassist.data.repository.RecipeRepositoryImpl
+import com.assanhanil.techassist.data.repository.ReportRepositoryImpl
 import com.assanhanil.techassist.domain.repository.BearingRepository
+import com.assanhanil.techassist.domain.repository.ExcelTemplateRepository
+import com.assanhanil.techassist.domain.repository.RecipeRepository
+import com.assanhanil.techassist.domain.repository.ReportRepository
 
 /**
  * Application class for ASSANHANİL TECH-ASSIST.
@@ -20,6 +26,18 @@ class TechAssistApplication : Application() {
     // Repositories
     val bearingRepository: BearingRepository by lazy {
         BearingRepositoryImpl(database.bearingDao())
+    }
+    
+    val recipeRepository: RecipeRepository by lazy {
+        RecipeRepositoryImpl(database.recipeDao())
+    }
+    
+    val reportRepository: ReportRepository by lazy {
+        ReportRepositoryImpl(database.reportDao())
+    }
+    
+    val excelTemplateRepository: ExcelTemplateRepository by lazy {
+        ExcelTemplateRepositoryImpl(database.excelTemplateDao())
     }
     
     // Theme Preferences
