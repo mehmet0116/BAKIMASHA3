@@ -205,16 +205,21 @@ class BackupHelper(private val context: Context) {
     }
 
     private fun backupReports(zipOut: ZipOutputStream): Int {
-        // In a real implementation, this would query the database
-        // For now, return 0 as placeholder
+        // TODO: Implement actual database backup when integrating with ViewModel
+        // This should query all reports from ReportDao and write them as JSON
+        // For now, returns 0 as this is a framework for the backup system
         return 0
     }
 
     private fun backupRecipes(zipOut: ZipOutputStream): Int {
+        // TODO: Implement actual database backup when integrating with ViewModel
+        // This should query all recipes from RecipeDao and write them as JSON
         return 0
     }
 
     private fun backupTemplates(zipOut: ZipOutputStream): Int {
+        // TODO: Implement actual database backup when integrating with ViewModel
+        // This should query all templates from ExcelTemplateDao and write them as JSON
         return 0
     }
 
@@ -238,15 +243,21 @@ class BackupHelper(private val context: Context) {
     }
 
     private fun restoreReport(zipIn: ZipInputStream, overwrite: Boolean): Boolean {
-        // In a real implementation, this would insert into the database
+        // TODO: Implement actual database restore when integrating with ViewModel
+        // This should parse JSON and insert into ReportDao
+        // Returns true as placeholder - actual implementation should return success status
         return true
     }
 
     private fun restoreRecipe(zipIn: ZipInputStream, overwrite: Boolean): Boolean {
+        // TODO: Implement actual database restore when integrating with ViewModel
+        // This should parse JSON and insert into RecipeDao
         return true
     }
 
     private fun restoreTemplate(zipIn: ZipInputStream, overwrite: Boolean): Boolean {
+        // TODO: Implement actual database restore when integrating with ViewModel
+        // This should parse JSON and insert into ExcelTemplateDao
         return true
     }
 
