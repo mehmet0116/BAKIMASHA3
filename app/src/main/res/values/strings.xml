@@ -1,6 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">BAKIMASHA3</string>
-    <string name="welcome_message">BAKIMASHA3\'e Hoş Geldiniz!</string>
-    <string name="app_description">Android Uygulaması</string>
+    <string name="app_name">ASSANHANİL TECH-ASSIST</string>
+    <string name="welcome_message">ASSANHANİL BURSA</string>
+    <string name="app_description">Operational Reporting System</string>
+    <string name="tagline">Digital Field Engineer Platform</string>
+    
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_bearing_finder">Bearing Finder</string>
+    <string name="nav_electrical_wizard">Electrical Wizard</string>
+    <string name="nav_reports">Reports</string>
+    <string name="nav_recipes">Recipes</string>
+    <string name="nav_camera">Camera</string>
+    <string name="nav_settings">Settings</string>
+    
+    <!-- Bearing Finder -->
+    <string name="bearing_finder_title">Visual Bearing Finder</string>
+    <string name="bearing_finder_desc">Enter measured dimensions to find the ISO code</string>
+    <string name="inner_diameter">Inner Diameter (ID)</string>
+    <string name="outer_diameter">Outer Diameter (OD)</string>
+    <string name="width">Width (W)</string>
+    <string name="tolerance">Tolerance (±mm)</string>
+    <string name="find_bearing">Find Bearing</string>
+    <string name="search_results">Search Results</string>
+    
+    <!-- Units -->
+    <string name="unit_mm">mm</string>
+    
+    <!-- Actions -->
+    <string name="action_search">Search</string>
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_export">Export</string>
+    <string name="action_capture">Capture</string>
 </resources>

@@ -1,11 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary">#6200EE</color>
-    <color name="primary_dark">#3700B3</color>
-    <color name="accent">#03DAC5</color>
+    <!-- Industrial Dark Mode Colors - AMOLED Black with Neon Blue accents -->
+    
+    <!-- Primary colors -->
+    <color name="primary">#00D4FF</color>
+    <color name="primary_dark">#0099CC</color>
+    <color name="primary_light">#66E0FF</color>
+    
+    <!-- Secondary/Accent colors -->
+    <color name="secondary">#00FF88</color>
+    <color name="accent">#00D4FF</color>
+    
+    <!-- Background colors - AMOLED Black -->
+    <color name="background">#000000</color>
+    <color name="surface">#121212</color>
+    <color name="surface_variant">#1E1E1E</color>
+    
+    <!-- Text colors -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B0B0B0</color>
+    <color name="text_disabled">#606060</color>
+    
+    <!-- Status colors -->
+    <color name="error">#FF4444</color>
+    <color name="warning">#FFAA00</color>
+    <color name="success">#00FF88</color>
+    
+    <!-- Glassmorphism -->
+    <color name="glass_background">#33FFFFFF</color>
+    <color name="glass_border">#66FFFFFF</color>
+    
+    <!-- Corporate colors -->
+    <color name="corporate_blue">#003366</color>
+    <color name="corporate_gray">#333333</color>
+    
+    <!-- Legacy compatibility -->
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
-    <color name="text_primary">#212121</color>
-    <color name="text_secondary">#757575</color>
-    <color name="background">#FAFAFA</color>
 </resources>
