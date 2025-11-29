@@ -60,6 +60,7 @@ fun CameraScreen(
     }
     
     var capturedPhotos by remember { mutableStateOf<List<CapturedPhoto>>(emptyList()) }
+    var nextPhotoId by remember { mutableStateOf(1) }
     var selectedPhoto by remember { mutableStateOf<CapturedPhoto?>(null) }
     var showAddNoteDialog by remember { mutableStateOf(false) }
     var photoForNote by remember { mutableStateOf<CapturedPhoto?>(null) }
@@ -79,14 +80,14 @@ fun CameraScreen(
         contract = ActivityResultContracts.TakePicturePreview()
     ) { bitmap ->
         bitmap?.let {
-            val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
             val newPhoto = CapturedPhoto(
-                id = capturedPhotos.size + 1,
+                id = nextPhotoId,
                 bitmap = it,
                 timestamp = Date(),
                 note = ""
             )
             capturedPhotos = capturedPhotos + newPhoto
+            nextPhotoId++
             Toast.makeText(context, "Fotoğraf kaydedildi", Toast.LENGTH_SHORT).show()
         }
     }

@@ -544,23 +544,57 @@ private fun CableSizeCalculator() {
                     val maxVd = maxVoltageDrop.toDoubleOrNull()
                     
                     result = if (i != null && v != null && l != null && maxVd != null) {
-                        // Find suitable cable based on current capacity
-                        val suitableCable = cableSizes.firstOrNull { (_, capacity) -> capacity >= i }
+                        // Find suitable cable based on both current capacity AND voltage drop
+                        val rho = 0.0175 // Copper resistivity (Ω·mm²/m)
+                        
+                        // Find the smallest cable that satisfies BOTH current capacity AND voltage drop
+                        val suitableCable = cableSizes.firstOrNull { (size, capacity) ->
+                            // Check current capacity
+                            val currentOk = capacity >= i
+                            
+                            // Check voltage drop
+                            val voltageDrop = (2 * l * i * rho) / size
+                            val voltageDropPercent = (voltageDrop / v) * 100
+                            val voltageDropOk = voltageDropPercent <= maxVd
+                            
+                            currentOk && voltageDropOk
+                        }
+                        
+                        // Also find cable based only on current (for comparison)
+                        val currentBasedCable = cableSizes.firstOrNull { (_, capacity) -> capacity >= i }
                         
                         if (suitableCable != null) {
                             val (size, capacity) = suitableCable
                             
-                            // Calculate voltage drop for this cable
-                            // ΔV = (2 * L * I * ρ) / S where ρ = 0.0175 for copper
-                            val rho = 0.0175 // Copper resistivity
+                            // Calculate actual voltage drop for selected cable
                             val voltageDrop = (2 * l * i * rho) / size
                             val voltageDropPercent = (voltageDrop / v) * 100
                             
                             """
-                            Önerilen Kablo: ${size} mm²
-                            Akım Kapasitesi: ${capacity} A
+                            ✓ Önerilen Kablo: ${size} mm²
+                            Akım Kapasitesi: ${capacity} A (Yük: ${String.format("%.1f", i)} A)
                             Gerilim Düşümü: ${String.format("%.2f", voltageDrop)} V (${String.format("%.2f", voltageDropPercent)}%)
-                            Durum: ${if (voltageDropPercent <= maxVd) "✓ Uygun" else "✗ Gerilim düşümü yüksek, daha kalın kesit gerekli"}
+                            Max İzin Verilen: ${maxVd}%
+                            Durum: Uygun - Her iki kriter de karşılanıyor
+                            """.trimIndent()
+                        } else if (currentBasedCable != null) {
+                            // Cable found for current but voltage drop is too high
+                            val (size, capacity) = currentBasedCable
+                            val voltageDrop = (2 * l * i * rho) / size
+                            val voltageDropPercent = (voltageDrop / v) * 100
+                            
+                            // Suggest larger cable
+                            val largerCables = cableSizes.filter { (s, _) -> s > size }
+                            val suggestion = if (largerCables.isNotEmpty()) {
+                                "Daha kalın kesit deneyin: ${largerCables.first().first} mm² veya üstü"
+                            } else {
+                                "Paralel kablo kullanımı veya gerilim seviyesini artırma gerekebilir"
+                            }
+                            
+                            """
+                            ✗ Akım için: ${size} mm² (${capacity} A) yeterli
+                            Ancak gerilim düşümü: ${String.format("%.2f", voltageDropPercent)}% > ${maxVd}%
+                            $suggestion
                             """.trimIndent()
                         } else {
                             "Bu akım için standart kablo kesiti bulunamadı. Paralel kablo kullanımı gerekebilir."

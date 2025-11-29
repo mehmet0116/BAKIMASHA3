@@ -59,10 +59,15 @@ fun ReportsScreen(
     
     // Load existing reports
     LaunchedEffect(Unit) {
-        generatedReports = excelService.getOutputDirectory().listFiles()
-            ?.filter { it.extension == "xlsx" }
-            ?.sortedByDescending { it.lastModified() }
-            ?: emptyList()
+        val outputDir = excelService.getOutputDirectory()
+        generatedReports = if (outputDir.exists()) {
+            outputDir.listFiles()
+                ?.filter { it.extension == "xlsx" }
+                ?.sortedByDescending { it.lastModified() }
+                ?: emptyList()
+        } else {
+            emptyList()
+        }
     }
     
     Column(
@@ -171,8 +176,12 @@ fun ReportsScreen(
                             shareExcelFile(context, file)
                         },
                         onDelete = {
-                            file.delete()
-                            generatedReports = generatedReports.filter { it != file }
+                            val deleted = file.delete()
+                            if (deleted) {
+                                generatedReports = generatedReports.filter { it != file }
+                            } else {
+                                Toast.makeText(context, "Dosya silinemedi", Toast.LENGTH_SHORT).show()
+                            }
                         }
                     )
                 }
