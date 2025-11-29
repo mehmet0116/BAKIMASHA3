@@ -75,7 +75,7 @@ fun BearingDiagram(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Bearing Dimensions",
+                text = "Rulman Boyutları",
                 style = MaterialTheme.typography.titleMedium,
                 color = TechAssistColors.Primary,
                 fontWeight = FontWeight.Bold
@@ -140,11 +140,11 @@ fun BearingDiagram(
                 horizontalAlignment = Alignment.Start,
                 modifier = Modifier.padding(8.dp)
             ) {
-                DimensionLegend(color = TechAssistColors.Primary, label = "OD - Outer Diameter")
+                DimensionLegend(color = TechAssistColors.Primary, label = "OD - Dış Çap")
                 Spacer(modifier = Modifier.height(4.dp))
-                DimensionLegend(color = TechAssistColors.Secondary, label = "ID - Inner Diameter")
+                DimensionLegend(color = TechAssistColors.Secondary, label = "ID - İç Çap")
                 Spacer(modifier = Modifier.height(4.dp))
-                DimensionLegend(color = TechAssistColors.TextSecondary, label = "W - Width")
+                DimensionLegend(color = TechAssistColors.TextSecondary, label = "W - Genişlik")
             }
         }
     }
@@ -189,7 +189,7 @@ fun BearingFinderWorkspace(
             .verticalScroll(rememberScrollState())
     ) {
         Text(
-            text = "Visual Bearing Finder",
+            text = "Görsel Rulman Bulucu",
             style = MaterialTheme.typography.headlineSmall,
             color = TechAssistColors.Primary,
             fontWeight = FontWeight.Bold
@@ -198,7 +198,7 @@ fun BearingFinderWorkspace(
         Spacer(modifier = Modifier.height(8.dp))
         
         Text(
-            text = "Enter measured dimensions to find the ISO code",
+            text = "ISO kodunu bulmak için ölçülen boyutları girin",
             style = MaterialTheme.typography.bodyMedium,
             color = TechAssistColors.TextSecondary
         )
@@ -216,8 +216,8 @@ fun BearingFinderWorkspace(
                 DimensionInputField(
                     value = innerDiameter,
                     onValueChange = { innerDiameter = it },
-                    label = "Inner Diameter (ID)",
-                    placeholder = "e.g., 20.0"
+                    label = "İç Çap (ID)",
+                    placeholder = "örn., 20.0"
                 )
                 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -226,8 +226,8 @@ fun BearingFinderWorkspace(
                 DimensionInputField(
                     value = outerDiameter,
                     onValueChange = { outerDiameter = it },
-                    label = "Outer Diameter (OD)",
-                    placeholder = "e.g., 47.0"
+                    label = "Dış Çap (OD)",
+                    placeholder = "örn., 47.0"
                 )
                 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -236,8 +236,8 @@ fun BearingFinderWorkspace(
                 DimensionInputField(
                     value = width,
                     onValueChange = { width = it },
-                    label = "Width (W)",
-                    placeholder = "e.g., 14.0"
+                    label = "Genişlik (W)",
+                    placeholder = "örn., 14.0"
                 )
                 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -246,7 +246,7 @@ fun BearingFinderWorkspace(
                 DimensionInputField(
                     value = tolerance,
                     onValueChange = { tolerance = it },
-                    label = "Tolerance (±mm)",
+                    label = "Tolerans (±mm)",
                     placeholder = "0.5"
                 )
                 
@@ -278,12 +278,12 @@ fun BearingFinderWorkspace(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Search,
-                        contentDescription = "Search",
+                        contentDescription = "Ara",
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Find Bearing",
+                        text = "Rulman Bul",
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -334,7 +334,7 @@ private fun SearchResultCard(result: BearingSearchResult) {
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Search Results",
+                text = "Arama Sonuçları",
                 style = MaterialTheme.typography.titleMedium,
                 color = TechAssistColors.Primary,
                 fontWeight = FontWeight.Bold
@@ -358,7 +358,7 @@ private fun SearchResultCard(result: BearingSearchResult) {
                 }
                 is BearingSearchResult.Error -> {
                     Text(
-                        text = "Error: ${result.exception.message}",
+                        text = "Hata: ${result.exception.message}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = TechAssistColors.Error
                     )

@@ -24,13 +24,13 @@ import com.assanhanil.techassist.presentation.ui.theme.TechAssistColors
  * Navigation destinations for the app.
  */
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
-    data object Home : Screen("home", "Home", Icons.Default.Home)
-    data object BearingFinder : Screen("bearing_finder", "Bearing Finder", Icons.Default.Search)
-    data object ElectricalWizard : Screen("electrical_wizard", "Electrical Wizard", Icons.Default.Bolt)
-    data object Reports : Screen("reports", "Reports", Icons.Default.Description)
-    data object Recipes : Screen("recipes", "Recipes", Icons.Default.Book)
-    data object Camera : Screen("camera", "Camera", Icons.Default.CameraAlt)
-    data object Settings : Screen("settings", "Settings", Icons.Default.Settings)
+    data object Home : Screen("home", "Ana Sayfa", Icons.Default.Home)
+    data object BearingFinder : Screen("bearing_finder", "Rulman Bulucu", Icons.Default.Search)
+    data object ElectricalWizard : Screen("electrical_wizard", "Elektrik Sihirbazı", Icons.Default.Bolt)
+    data object Reports : Screen("reports", "Raporlar", Icons.Default.Description)
+    data object Recipes : Screen("recipes", "Tarifler", Icons.Default.Book)
+    data object Camera : Screen("camera", "Kamera", Icons.Default.CameraAlt)
+    data object Settings : Screen("settings", "Ayarlar", Icons.Default.Settings)
 }
 
 /**
@@ -73,7 +73,7 @@ fun HomeScreen(
         Spacer(modifier = Modifier.height(8.dp))
         
         Text(
-            text = "Digital Field Engineer Platform",
+            text = "Dijital Saha Mühendisi Platformu",
             style = MaterialTheme.typography.bodyMedium,
             color = TechAssistColors.TextDisabled
         )
