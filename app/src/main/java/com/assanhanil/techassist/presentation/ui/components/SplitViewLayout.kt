@@ -6,9 +6,28 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.assanhanil.techassist.presentation.ui.theme.TechAssistColors
+
+/**
+ * Vertical divider component for split-view layouts.
+ * This is a custom implementation for compatibility with older Material3 versions.
+ */
+@Composable
+private fun VerticalDivider(
+    modifier: Modifier = Modifier,
+    thickness: Dp = DividerDefaults.Thickness,
+    color: Color = DividerDefaults.color
+) {
+    Box(
+        modifier = modifier
+            .width(thickness)
+            .background(color)
+    )
+}
 
 /**
  * Adaptive Split-View Layout Component.
