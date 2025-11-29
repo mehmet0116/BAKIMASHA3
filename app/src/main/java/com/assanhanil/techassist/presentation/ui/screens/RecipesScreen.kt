@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.assanhanil.techassist.presentation.ui.components.GlassCard
 import com.assanhanil.techassist.presentation.ui.components.NeonCard
-import com.assanhanil.techassist.presentation.ui.theme.TechAssistColors
+import com.assanhanil.techassist.presentation.ui.theme.LocalThemeColors
 
 /**
  * Recipes Screen - Master maintenance recipes/templates.
@@ -35,6 +35,8 @@ import com.assanhanil.techassist.presentation.ui.theme.TechAssistColors
 fun RecipesScreen(
     modifier: Modifier = Modifier
 ) {
+    val themeColors = LocalThemeColors.current
+    
     var selectedRecipe by remember { mutableStateOf<MaintenanceRecipe?>(null) }
     var showNewRecipeDialog by remember { mutableStateOf(false) }
     
@@ -99,7 +101,7 @@ fun RecipesScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(TechAssistColors.Background)
+            .background(themeColors.background)
             .padding(16.dp)
     ) {
         // Header
@@ -112,21 +114,21 @@ fun RecipesScreen(
                 Text(
                     text = "Bakım Tarifleri",
                     style = MaterialTheme.typography.headlineSmall,
-                    color = TechAssistColors.Primary,
+                    color = themeColors.primary,
                     fontWeight = FontWeight.Bold
                 )
                 
                 Text(
                     text = "Hazır bakım şablonları ve kontrol listeleri",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = TechAssistColors.TextSecondary
+                    color = themeColors.textSecondary
                 )
             }
             
             FloatingActionButton(
                 onClick = { showNewRecipeDialog = true },
-                containerColor = TechAssistColors.Primary,
-                contentColor = TechAssistColors.Background
+                containerColor = themeColors.primary,
+                contentColor = themeColors.background
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Yeni Tarif")
             }
@@ -148,8 +150,8 @@ fun RecipesScreen(
                     onClick = { selectedCategory = category },
                     label = { Text(category) },
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = TechAssistColors.Primary,
-                        selectedLabelColor = TechAssistColors.Background
+                        selectedContainerColor = themeColors.primary,
+                        selectedLabelColor = themeColors.background
                     )
                 )
             }
@@ -177,14 +179,14 @@ fun RecipesScreen(
                     Icon(
                         imageVector = Icons.Default.Book,
                         contentDescription = null,
-                        tint = TechAssistColors.TextDisabled,
+                        tint = themeColors.textDisabled,
                         modifier = Modifier.size(48.dp)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "Bu kategoride tarif bulunamadı",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = TechAssistColors.TextDisabled
+                        color = themeColors.textDisabled
                     )
                 }
             }
@@ -227,6 +229,8 @@ private fun RecipeCard(
     recipe: MaintenanceRecipe,
     onClick: () -> Unit
 ) {
+    val themeColors = LocalThemeColors.current
+    
     NeonCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -243,13 +247,13 @@ private fun RecipeCard(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(TechAssistColors.Primary.copy(alpha = 0.1f)),
+                    .background(themeColors.primary.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.Checklist,
                     contentDescription = null,
-                    tint = TechAssistColors.Primary,
+                    tint = themeColors.primary,
                     modifier = Modifier.size(28.dp)
                 )
             }
@@ -262,14 +266,14 @@ private fun RecipeCard(
                 Text(
                     text = recipe.name,
                     style = MaterialTheme.typography.titleMedium,
-                    color = TechAssistColors.TextPrimary,
+                    color = themeColors.textPrimary,
                     fontWeight = FontWeight.Bold
                 )
                 
                 Text(
                     text = recipe.description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = TechAssistColors.TextSecondary,
+                    color = themeColors.textSecondary,
                     maxLines = 1
                 )
                 
@@ -282,8 +286,8 @@ private fun RecipeCard(
                         onClick = { },
                         label = { Text(recipe.category, style = MaterialTheme.typography.labelSmall) },
                         colors = AssistChipDefaults.assistChipColors(
-                            containerColor = TechAssistColors.Secondary.copy(alpha = 0.1f),
-                            labelColor = TechAssistColors.Secondary
+                            containerColor = themeColors.secondary.copy(alpha = 0.1f),
+                            labelColor = themeColors.secondary
                         )
                     )
                     
@@ -292,7 +296,7 @@ private fun RecipeCard(
                     Text(
                         text = "${recipe.steps.size} adım",
                         style = MaterialTheme.typography.labelSmall,
-                        color = TechAssistColors.TextDisabled
+                        color = themeColors.textDisabled
                     )
                 }
             }
@@ -300,7 +304,7 @@ private fun RecipeCard(
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = null,
-                tint = TechAssistColors.TextDisabled
+                tint = themeColors.textDisabled
             )
         }
     }
@@ -311,6 +315,7 @@ private fun RecipeDetailDialog(
     recipe: MaintenanceRecipe,
     onDismiss: () -> Unit
 ) {
+    val themeColors = LocalThemeColors.current
     var checkedSteps by remember { mutableStateOf(setOf<Int>()) }
     
     AlertDialog(
@@ -320,13 +325,13 @@ private fun RecipeDetailDialog(
                 Text(
                     text = recipe.name,
                     style = MaterialTheme.typography.titleLarge,
-                    color = TechAssistColors.Primary,
+                    color = themeColors.primary,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = recipe.description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = TechAssistColors.TextSecondary
+                    color = themeColors.textSecondary
                 )
             }
         },
@@ -342,8 +347,8 @@ private fun RecipeDetailDialog(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
                             .background(
-                                if (isChecked) TechAssistColors.Secondary.copy(alpha = 0.1f)
-                                else TechAssistColors.SurfaceVariant
+                                if (isChecked) themeColors.secondary.copy(alpha = 0.1f)
+                                else themeColors.surfaceVariant
                             )
                             .clickable {
                                 checkedSteps = if (isChecked) {
@@ -365,8 +370,8 @@ private fun RecipeDetailDialog(
                                 }
                             },
                             colors = CheckboxDefaults.colors(
-                                checkedColor = TechAssistColors.Secondary,
-                                uncheckedColor = TechAssistColors.TextSecondary
+                                checkedColor = themeColors.secondary,
+                                uncheckedColor = themeColors.textSecondary
                             )
                         )
                         
@@ -376,14 +381,14 @@ private fun RecipeDetailDialog(
                             Text(
                                 text = "${step.order}. ${step.title}",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = if (isChecked) TechAssistColors.Secondary else TechAssistColors.TextPrimary,
+                                color = if (isChecked) themeColors.secondary else themeColors.textPrimary,
                                 fontWeight = FontWeight.Medium
                             )
                             if (step.description.isNotEmpty()) {
                                 Text(
                                     text = step.description,
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = TechAssistColors.TextSecondary
+                                    color = themeColors.textSecondary
                                 )
                             }
                         }
@@ -395,7 +400,7 @@ private fun RecipeDetailDialog(
             Button(
                 onClick = onDismiss,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = TechAssistColors.Primary
+                    containerColor = themeColors.primary
                 )
             ) {
                 Text("Tamam")
@@ -403,10 +408,10 @@ private fun RecipeDetailDialog(
         },
         dismissButton = {
             TextButton(onClick = { checkedSteps = emptySet() }) {
-                Text("Sıfırla", color = TechAssistColors.TextSecondary)
+                Text("Sıfırla", color = themeColors.textSecondary)
             }
         },
-        containerColor = TechAssistColors.Surface,
+        containerColor = themeColors.surface,
         modifier = Modifier.heightIn(max = 500.dp)
     )
 }
@@ -417,6 +422,8 @@ private fun NewRecipeDialog(
     onDismiss: () -> Unit,
     onSave: (MaintenanceRecipe) -> Unit
 ) {
+    val themeColors = LocalThemeColors.current
+    
     var name by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("Günlük") }
@@ -429,7 +436,7 @@ private fun NewRecipeDialog(
         title = {
             Text(
                 text = "Yeni Tarif Oluştur",
-                color = TechAssistColors.Primary,
+                color = themeColors.primary,
                 fontWeight = FontWeight.Bold
             )
         },
@@ -446,8 +453,8 @@ private fun NewRecipeDialog(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = TechAssistColors.Primary,
-                        unfocusedBorderColor = TechAssistColors.GlassBorder
+                        focusedBorderColor = themeColors.primary,
+                        unfocusedBorderColor = themeColors.glassBorder
                     )
                 )
                 
@@ -460,8 +467,8 @@ private fun NewRecipeDialog(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = TechAssistColors.Primary,
-                        unfocusedBorderColor = TechAssistColors.GlassBorder
+                        focusedBorderColor = themeColors.primary,
+                        unfocusedBorderColor = themeColors.glassBorder
                     )
                 )
                 
@@ -471,7 +478,7 @@ private fun NewRecipeDialog(
                 Text(
                     text = "Kategori",
                     style = MaterialTheme.typography.labelMedium,
-                    color = TechAssistColors.TextSecondary
+                    color = themeColors.textSecondary
                 )
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -482,8 +489,8 @@ private fun NewRecipeDialog(
                             onClick = { category = cat },
                             label = { Text(cat) },
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = TechAssistColors.Primary,
-                                selectedLabelColor = TechAssistColors.Background
+                                selectedContainerColor = themeColors.primary,
+                                selectedLabelColor = themeColors.background
                             )
                         )
                     }
@@ -495,7 +502,7 @@ private fun NewRecipeDialog(
                 Text(
                     text = "Adımlar (${steps.size})",
                     style = MaterialTheme.typography.labelMedium,
-                    color = TechAssistColors.TextSecondary
+                    color = themeColors.textSecondary
                 )
                 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -510,7 +517,7 @@ private fun NewRecipeDialog(
                         Text(
                             text = "${index + 1}. ${step.title}",
                             style = MaterialTheme.typography.bodySmall,
-                            color = TechAssistColors.TextPrimary,
+                            color = themeColors.textPrimary,
                             modifier = Modifier.weight(1f)
                         )
                         IconButton(
@@ -521,7 +528,7 @@ private fun NewRecipeDialog(
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Kaldır",
-                                tint = TechAssistColors.Error,
+                                tint = themeColors.error,
                                 modifier = Modifier.size(16.dp)
                             )
                         }
@@ -553,13 +560,13 @@ private fun NewRecipeDialog(
                             Icon(
                                 imageVector = Icons.Default.Add,
                                 contentDescription = "Ekle",
-                                tint = TechAssistColors.Primary
+                                tint = themeColors.primary
                             )
                         }
                     },
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = TechAssistColors.Primary,
-                        unfocusedBorderColor = TechAssistColors.GlassBorder
+                        focusedBorderColor = themeColors.primary,
+                        unfocusedBorderColor = themeColors.glassBorder
                     )
                 )
             }
@@ -581,7 +588,7 @@ private fun NewRecipeDialog(
                 },
                 enabled = name.isNotBlank() && steps.isNotEmpty(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = TechAssistColors.Primary
+                    containerColor = themeColors.primary
                 )
             ) {
                 Text("Kaydet")
@@ -589,10 +596,10 @@ private fun NewRecipeDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("İptal", color = TechAssistColors.TextSecondary)
+                Text("İptal", color = themeColors.textSecondary)
             }
         },
-        containerColor = TechAssistColors.Surface
+        containerColor = themeColors.surface
     )
 }
 
