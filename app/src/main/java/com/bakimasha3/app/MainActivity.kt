@@ -12,13 +12,5 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        // Uygulama başlangıç kodu buraya yazılabilir
-        setupUI()
-    }
-
-    private fun setupUI() {
-        // UI kurulum kodları
-        binding.welcomeText.text = getString(R.string.welcome_message)
     }
 }
