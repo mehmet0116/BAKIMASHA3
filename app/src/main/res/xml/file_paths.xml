@@ -5,6 +5,21 @@
         name="reports"
         path="reports/" />
     
+    <!-- Photos directory for captured images -->
+    <external-files-path
+        name="photos"
+        path="photos/" />
+    
+    <!-- Backups directory -->
+    <external-files-path
+        name="backups"
+        path="backups/" />
+    
+    <!-- Root external files -->
+    <external-files-path
+        name="external_files"
+        path="." />
+    
     <!-- Cache directory for temporary files -->
     <cache-path
         name="cache"

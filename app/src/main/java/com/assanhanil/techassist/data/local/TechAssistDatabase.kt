@@ -6,8 +6,11 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.assanhanil.techassist.data.local.dao.BearingDao
+import com.assanhanil.techassist.data.local.dao.ExcelTemplateDao
+import com.assanhanil.techassist.data.local.dao.RecipeDao
 import com.assanhanil.techassist.data.local.dao.ReportDao
 import com.assanhanil.techassist.data.local.entity.BearingEntity
+import com.assanhanil.techassist.data.local.entity.ExcelTemplateEntity
 import com.assanhanil.techassist.data.local.entity.RecipeEntity
 import com.assanhanil.techassist.data.local.entity.ReportEntity
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +24,8 @@ import kotlinx.coroutines.launch
     entities = [
         BearingEntity::class,
         ReportEntity::class,
-        RecipeEntity::class
+        RecipeEntity::class,
+        ExcelTemplateEntity::class
     ],
     version = 1,
     exportSchema = false
@@ -30,6 +34,8 @@ abstract class TechAssistDatabase : RoomDatabase() {
 
     abstract fun bearingDao(): BearingDao
     abstract fun reportDao(): ReportDao
+    abstract fun recipeDao(): RecipeDao
+    abstract fun excelTemplateDao(): ExcelTemplateDao
 
     companion object {
         @Volatile
