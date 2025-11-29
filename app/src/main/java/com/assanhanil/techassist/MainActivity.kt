@@ -237,7 +237,7 @@ fun DrawerContent(
             }
         }
         
-        HorizontalDivider(color = themeColors.glassBorder)
+        Divider(color = themeColors.glassBorder)
         
         Spacer(modifier = Modifier.height(16.dp))
         
