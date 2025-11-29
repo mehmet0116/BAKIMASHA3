@@ -16,34 +16,40 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.assanhanil.techassist.data.preferences.ThemePreferences
 import com.assanhanil.techassist.presentation.ui.components.GlassCard
 import com.assanhanil.techassist.presentation.ui.components.NeonCard
-import com.assanhanil.techassist.presentation.ui.theme.TechAssistColors
+import com.assanhanil.techassist.presentation.ui.theme.LocalThemeColors
 
 /**
  * Settings Screen - Application configuration.
  * 
  * Features:
  * - User profile settings
+ * - Theme settings (Dark/Light mode)
  * - Notification preferences
  * - Data management
  * - About section
  */
 @Composable
 fun SettingsScreen(
+    themePreferences: ThemePreferences,
+    isDarkMode: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val themeColors = LocalThemeColors.current
+    
     var operatorName by remember { mutableStateOf("") }
     var autoSaveEnabled by remember { mutableStateOf(true) }
     var notificationsEnabled by remember { mutableStateOf(true) }
-    var darkModeEnabled by remember { mutableStateOf(true) }
+    val useSystemTheme by themePreferences.useSystemTheme.collectAsState()
     var showAboutDialog by remember { mutableStateOf(false) }
     var showClearDataDialog by remember { mutableStateOf(false) }
     
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(TechAssistColors.Background)
+            .background(themeColors.background)
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
     ) {
@@ -51,7 +57,7 @@ fun SettingsScreen(
         Text(
             text = "Ayarlar",
             style = MaterialTheme.typography.headlineSmall,
-            color = TechAssistColors.Primary,
+            color = themeColors.primary,
             fontWeight = FontWeight.Bold
         )
         
@@ -60,7 +66,7 @@ fun SettingsScreen(
         Text(
             text = "Uygulama yapılandırması",
             style = MaterialTheme.typography.bodyMedium,
-            color = TechAssistColors.TextSecondary
+            color = themeColors.textSecondary
         )
         
         Spacer(modifier = Modifier.height(24.dp))
@@ -81,12 +87,12 @@ fun SettingsScreen(
                         Icon(
                             imageVector = Icons.Default.Person,
                             contentDescription = null,
-                            tint = TechAssistColors.Primary
+                            tint = themeColors.primary
                         )
                     },
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = TechAssistColors.Primary,
-                        unfocusedBorderColor = TechAssistColors.GlassBorder
+                        focusedBorderColor = themeColors.primary,
+                        unfocusedBorderColor = themeColors.glassBorder
                     )
                 )
                 
@@ -95,7 +101,41 @@ fun SettingsScreen(
                 Text(
                     text = "Bu isim raporlarda kullanılacaktır",
                     style = MaterialTheme.typography.bodySmall,
-                    color = TechAssistColors.TextDisabled
+                    color = themeColors.textDisabled
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Theme Section
+        SettingsSectionHeader(title = "Tema Ayarları")
+        
+        GlassCard(modifier = Modifier.fillMaxWidth()) {
+            Column {
+                SettingsToggleItem(
+                    icon = Icons.Default.PhoneAndroid,
+                    title = "Sistem Temasını Kullan",
+                    subtitle = "Cihazın tema ayarını takip et",
+                    checked = useSystemTheme,
+                    onCheckedChange = { 
+                        themePreferences.setUseSystemThemePreference(it)
+                    }
+                )
+                
+                HorizontalDivider(color = themeColors.glassBorder.copy(alpha = 0.3f))
+                
+                SettingsToggleItem(
+                    icon = if (isDarkMode) Icons.Default.DarkMode else Icons.Default.LightMode,
+                    title = "Karanlık Mod",
+                    subtitle = if (isDarkMode) "AMOLED optimizasyonu açık" else "Aydınlık tema aktif",
+                    checked = isDarkMode,
+                    onCheckedChange = { 
+                        if (!useSystemTheme) {
+                            themePreferences.setDarkModePreference(it)
+                        }
+                    },
+                    enabled = !useSystemTheme
                 )
             }
         }
@@ -115,7 +155,7 @@ fun SettingsScreen(
                     onCheckedChange = { autoSaveEnabled = it }
                 )
                 
-                Divider(color = TechAssistColors.GlassBorder.copy(alpha = 0.3f))
+                HorizontalDivider(color = themeColors.glassBorder.copy(alpha = 0.3f))
                 
                 SettingsToggleItem(
                     icon = Icons.Default.Notifications,
@@ -123,17 +163,6 @@ fun SettingsScreen(
                     subtitle = "Bakım hatırlatıcıları",
                     checked = notificationsEnabled,
                     onCheckedChange = { notificationsEnabled = it }
-                )
-                
-                Divider(color = TechAssistColors.GlassBorder.copy(alpha = 0.3f))
-                
-                SettingsToggleItem(
-                    icon = Icons.Default.DarkMode,
-                    title = "Karanlık Mod",
-                    subtitle = "AMOLED optimizasyonu",
-                    checked = darkModeEnabled,
-                    onCheckedChange = { darkModeEnabled = it },
-                    enabled = false // Always dark mode for this app
                 )
             }
         }
@@ -152,7 +181,7 @@ fun SettingsScreen(
                     onClick = { /* Backup functionality */ }
                 )
                 
-                Divider(color = TechAssistColors.GlassBorder.copy(alpha = 0.3f))
+                HorizontalDivider(color = themeColors.glassBorder.copy(alpha = 0.3f))
                 
                 SettingsClickableItem(
                     icon = Icons.Default.Restore,
@@ -161,7 +190,7 @@ fun SettingsScreen(
                     onClick = { /* Restore functionality */ }
                 )
                 
-                Divider(color = TechAssistColors.GlassBorder.copy(alpha = 0.3f))
+                HorizontalDivider(color = themeColors.glassBorder.copy(alpha = 0.3f))
                 
                 SettingsClickableItem(
                     icon = Icons.Default.DeleteForever,
@@ -187,7 +216,7 @@ fun SettingsScreen(
                     onClick = { showAboutDialog = true }
                 )
                 
-                Divider(color = TechAssistColors.GlassBorder.copy(alpha = 0.3f))
+                HorizontalDivider(color = themeColors.glassBorder.copy(alpha = 0.3f))
                 
                 SettingsClickableItem(
                     icon = Icons.Default.Policy,
@@ -196,7 +225,7 @@ fun SettingsScreen(
                     onClick = { /* Open privacy policy */ }
                 )
                 
-                Divider(color = TechAssistColors.GlassBorder.copy(alpha = 0.3f))
+                HorizontalDivider(color = themeColors.glassBorder.copy(alpha = 0.3f))
                 
                 SettingsClickableItem(
                     icon = Icons.Default.Help,
@@ -213,7 +242,7 @@ fun SettingsScreen(
         Text(
             text = "ASSANHANİL TECH-ASSIST © 2024",
             style = MaterialTheme.typography.bodySmall,
-            color = TechAssistColors.TextDisabled,
+            color = themeColors.textDisabled,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
         
@@ -222,7 +251,7 @@ fun SettingsScreen(
         Text(
             text = "Assan Hanil Bursa",
             style = MaterialTheme.typography.bodySmall,
-            color = TechAssistColors.TextDisabled,
+            color = themeColors.textDisabled,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
     }
@@ -239,13 +268,13 @@ fun SettingsScreen(
                     Text(
                         text = "ASSANHANİL",
                         style = MaterialTheme.typography.headlineSmall,
-                        color = TechAssistColors.Primary,
+                        color = themeColors.primary,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = "TECH-ASSIST",
                         style = MaterialTheme.typography.titleMedium,
-                        color = TechAssistColors.TextSecondary
+                        color = themeColors.textSecondary
                     )
                 }
             },
@@ -262,7 +291,7 @@ fun SettingsScreen(
                     Text(
                         text = "Dijital Saha Mühendisi Platformu",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TechAssistColors.TextSecondary
+                        color = themeColors.textSecondary
                     )
                     
                     Spacer(modifier = Modifier.height(8.dp))
@@ -270,7 +299,7 @@ fun SettingsScreen(
                     Text(
                         text = "Endüstriyel bakım ve raporlama işlemlerini dijitalleştiren, offline-first mimariye sahip profesyonel bir platformdur.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = TechAssistColors.TextDisabled
+                        color = themeColors.textDisabled
                     )
                 }
             },
@@ -278,13 +307,13 @@ fun SettingsScreen(
                 Button(
                     onClick = { showAboutDialog = false },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = TechAssistColors.Primary
+                        containerColor = themeColors.primary
                     )
                 ) {
                     Text("Tamam")
                 }
             },
-            containerColor = TechAssistColors.Surface
+            containerColor = themeColors.surface
         )
     }
     
@@ -295,14 +324,14 @@ fun SettingsScreen(
             title = {
                 Text(
                     text = "Tüm Verileri Sil",
-                    color = TechAssistColors.Error,
+                    color = themeColors.error,
                     fontWeight = FontWeight.Bold
                 )
             },
             text = {
                 Text(
                     text = "Bu işlem tüm raporları, tarifleri ve ayarları silecektir. Bu işlem geri alınamaz!",
-                    color = TechAssistColors.TextSecondary
+                    color = themeColors.textSecondary
                 )
             },
             confirmButton = {
@@ -312,7 +341,7 @@ fun SettingsScreen(
                         showClearDataDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = TechAssistColors.Error
+                        containerColor = themeColors.error
                     )
                 ) {
                     Text("Sil")
@@ -320,20 +349,22 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showClearDataDialog = false }) {
-                    Text("İptal", color = TechAssistColors.TextSecondary)
+                    Text("İptal", color = themeColors.textSecondary)
                 }
             },
-            containerColor = TechAssistColors.Surface
+            containerColor = themeColors.surface
         )
     }
 }
 
 @Composable
 private fun SettingsSectionHeader(title: String) {
+    val themeColors = LocalThemeColors.current
+    
     Text(
         text = title,
         style = MaterialTheme.typography.titleSmall,
-        color = TechAssistColors.Primary,
+        color = themeColors.primary,
         fontWeight = FontWeight.Bold,
         modifier = Modifier.padding(vertical = 8.dp)
     )
@@ -348,6 +379,8 @@ private fun SettingsToggleItem(
     onCheckedChange: (Boolean) -> Unit,
     enabled: Boolean = true
 ) {
+    val themeColors = LocalThemeColors.current
+    
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -358,7 +391,7 @@ private fun SettingsToggleItem(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = if (enabled) TechAssistColors.Primary else TechAssistColors.TextDisabled,
+            tint = if (enabled) themeColors.primary else themeColors.textDisabled,
             modifier = Modifier.size(24.dp)
         )
         
@@ -368,13 +401,13 @@ private fun SettingsToggleItem(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
-                color = if (enabled) TechAssistColors.TextPrimary else TechAssistColors.TextDisabled,
+                color = if (enabled) themeColors.textPrimary else themeColors.textDisabled,
                 fontWeight = FontWeight.Medium
             )
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
-                color = TechAssistColors.TextSecondary
+                color = themeColors.textSecondary
             )
         }
         
@@ -383,10 +416,10 @@ private fun SettingsToggleItem(
             onCheckedChange = onCheckedChange,
             enabled = enabled,
             colors = SwitchDefaults.colors(
-                checkedThumbColor = TechAssistColors.Primary,
-                checkedTrackColor = TechAssistColors.Primary.copy(alpha = 0.5f),
-                uncheckedThumbColor = TechAssistColors.TextSecondary,
-                uncheckedTrackColor = TechAssistColors.SurfaceVariant
+                checkedThumbColor = themeColors.primary,
+                checkedTrackColor = themeColors.primary.copy(alpha = 0.5f),
+                uncheckedThumbColor = themeColors.textSecondary,
+                uncheckedTrackColor = themeColors.surfaceVariant
             )
         )
     }
@@ -400,6 +433,8 @@ private fun SettingsClickableItem(
     onClick: () -> Unit,
     isDestructive: Boolean = false
 ) {
+    val themeColors = LocalThemeColors.current
+    
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -410,7 +445,7 @@ private fun SettingsClickableItem(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = if (isDestructive) TechAssistColors.Error else TechAssistColors.Primary,
+            tint = if (isDestructive) themeColors.error else themeColors.primary,
             modifier = Modifier.size(24.dp)
         )
         
@@ -420,26 +455,28 @@ private fun SettingsClickableItem(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
-                color = if (isDestructive) TechAssistColors.Error else TechAssistColors.TextPrimary,
+                color = if (isDestructive) themeColors.error else themeColors.textPrimary,
                 fontWeight = FontWeight.Medium
             )
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
-                color = TechAssistColors.TextSecondary
+                color = themeColors.textSecondary
             )
         }
         
         Icon(
             imageVector = Icons.Default.ChevronRight,
             contentDescription = null,
-            tint = TechAssistColors.TextDisabled
+            tint = themeColors.textDisabled
         )
     }
 }
 
 @Composable
 private fun InfoRow(label: String, value: String) {
+    val themeColors = LocalThemeColors.current
+    
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -449,12 +486,12 @@ private fun InfoRow(label: String, value: String) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
-            color = TechAssistColors.TextSecondary
+            color = themeColors.textSecondary
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
-            color = TechAssistColors.TextPrimary,
+            color = themeColors.textPrimary,
             fontWeight = FontWeight.Medium
         )
     }

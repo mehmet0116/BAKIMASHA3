@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import com.assanhanil.techassist.presentation.ui.components.GlassCard
 import com.assanhanil.techassist.presentation.ui.components.NeonCard
-import com.assanhanil.techassist.presentation.ui.theme.TechAssistColors
+import com.assanhanil.techassist.presentation.ui.theme.LocalThemeColors
 import com.assanhanil.techassist.service.ExcelService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -46,6 +46,8 @@ fun ReportsScreen(
     excelService: ExcelService,
     modifier: Modifier = Modifier
 ) {
+    val themeColors = LocalThemeColors.current
+    
     var showNewReportDialog by remember { mutableStateOf(false) }
     var reportTitle by remember { mutableStateOf("") }
     var operatorName by remember { mutableStateOf("") }
@@ -73,14 +75,14 @@ fun ReportsScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(TechAssistColors.Background)
+            .background(themeColors.background)
             .padding(16.dp)
     ) {
         // Header
         Text(
             text = "Excel Rapor Oluşturucu",
             style = MaterialTheme.typography.headlineSmall,
-            color = TechAssistColors.Primary,
+            color = themeColors.primary,
             fontWeight = FontWeight.Bold
         )
         
@@ -89,7 +91,7 @@ fun ReportsScreen(
         Text(
             text = "Bakım raporlarını Excel formatında oluşturun ve paylaşın",
             style = MaterialTheme.typography.bodyMedium,
-            color = TechAssistColors.TextSecondary
+            color = themeColors.textSecondary
         )
         
         Spacer(modifier = Modifier.height(24.dp))
@@ -109,7 +111,7 @@ fun ReportsScreen(
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = "Yeni Rapor",
-                    tint = TechAssistColors.Primary,
+                    tint = themeColors.primary,
                     modifier = Modifier.size(32.dp)
                 )
                 Spacer(modifier = Modifier.width(16.dp))
@@ -117,13 +119,13 @@ fun ReportsScreen(
                     Text(
                         text = "Yeni Rapor Oluştur",
                         style = MaterialTheme.typography.titleMedium,
-                        color = TechAssistColors.TextPrimary,
+                        color = themeColors.textPrimary,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = "Excel (.xlsx) formatında bakım raporu",
                         style = MaterialTheme.typography.bodySmall,
-                        color = TechAssistColors.TextSecondary
+                        color = themeColors.textSecondary
                     )
                 }
             }
@@ -135,7 +137,7 @@ fun ReportsScreen(
         Text(
             text = "Mevcut Raporlar",
             style = MaterialTheme.typography.titleMedium,
-            color = TechAssistColors.TextPrimary,
+            color = themeColors.textPrimary,
             fontWeight = FontWeight.Medium
         )
         
@@ -154,14 +156,14 @@ fun ReportsScreen(
                     Icon(
                         imageVector = Icons.Default.Description,
                         contentDescription = null,
-                        tint = TechAssistColors.TextDisabled,
+                        tint = themeColors.textDisabled,
                         modifier = Modifier.size(48.dp)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "Henüz rapor oluşturulmadı",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = TechAssistColors.TextDisabled
+                        color = themeColors.textDisabled
                     )
                 }
             }
@@ -196,7 +198,7 @@ fun ReportsScreen(
             title = {
                 Text(
                     text = "Yeni Rapor Oluştur",
-                    color = TechAssistColors.TextPrimary
+                    color = themeColors.textPrimary
                 )
             },
             text = {
@@ -211,8 +213,8 @@ fun ReportsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = TechAssistColors.Primary,
-                            unfocusedBorderColor = TechAssistColors.GlassBorder
+                            focusedBorderColor = themeColors.primary,
+                            unfocusedBorderColor = themeColors.glassBorder
                         )
                     )
                     
@@ -226,8 +228,8 @@ fun ReportsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = TechAssistColors.Primary,
-                            unfocusedBorderColor = TechAssistColors.GlassBorder
+                            focusedBorderColor = themeColors.primary,
+                            unfocusedBorderColor = themeColors.glassBorder
                         )
                     )
                     
@@ -242,8 +244,8 @@ fun ReportsScreen(
                         minLines = 3,
                         maxLines = 5,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = TechAssistColors.Primary,
-                            unfocusedBorderColor = TechAssistColors.GlassBorder
+                            focusedBorderColor = themeColors.primary,
+                            unfocusedBorderColor = themeColors.glassBorder
                         )
                     )
                 }
@@ -281,13 +283,13 @@ fun ReportsScreen(
                     },
                     enabled = reportTitle.isNotBlank() && !isGenerating,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = TechAssistColors.Primary
+                        containerColor = themeColors.primary
                     )
                 ) {
                     if (isGenerating) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
-                            color = TechAssistColors.Background,
+                            color = themeColors.background,
                             strokeWidth = 2.dp
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -297,10 +299,10 @@ fun ReportsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showNewReportDialog = false }) {
-                    Text("İptal", color = TechAssistColors.TextSecondary)
+                    Text("İptal", color = themeColors.textSecondary)
                 }
             },
-            containerColor = TechAssistColors.Surface
+            containerColor = themeColors.surface
         )
     }
     
@@ -319,6 +321,7 @@ private fun ReportItem(
     onShare: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val themeColors = LocalThemeColors.current
     var showDeleteConfirm by remember { mutableStateOf(false) }
     
     GlassCard(
@@ -333,7 +336,7 @@ private fun ReportItem(
             Icon(
                 imageVector = Icons.Default.Description,
                 contentDescription = null,
-                tint = TechAssistColors.Secondary,
+                tint = themeColors.secondary,
                 modifier = Modifier.size(40.dp)
             )
             
@@ -343,19 +346,19 @@ private fun ReportItem(
                 Text(
                     text = file.nameWithoutExtension,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = TechAssistColors.TextPrimary,
+                    color = themeColors.textPrimary,
                     fontWeight = FontWeight.Medium
                 )
                 Text(
                     text = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
                         .format(Date(file.lastModified())),
                     style = MaterialTheme.typography.bodySmall,
-                    color = TechAssistColors.TextSecondary
+                    color = themeColors.textSecondary
                 )
                 Text(
                     text = formatFileSize(file.length()),
                     style = MaterialTheme.typography.labelSmall,
-                    color = TechAssistColors.TextDisabled
+                    color = themeColors.textDisabled
                 )
             }
             
@@ -363,7 +366,7 @@ private fun ReportItem(
                 Icon(
                     imageVector = Icons.Default.Share,
                     contentDescription = "Paylaş",
-                    tint = TechAssistColors.Primary
+                    tint = themeColors.primary
                 )
             }
             
@@ -371,7 +374,7 @@ private fun ReportItem(
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Sil",
-                    tint = TechAssistColors.Error
+                    tint = themeColors.error
                 )
             }
         }
@@ -380,11 +383,11 @@ private fun ReportItem(
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            title = { Text("Raporu Sil", color = TechAssistColors.TextPrimary) },
+            title = { Text("Raporu Sil", color = themeColors.textPrimary) },
             text = {
                 Text(
                     "Bu raporu silmek istediğinizden emin misiniz?",
-                    color = TechAssistColors.TextSecondary
+                    color = themeColors.textSecondary
                 )
             },
             confirmButton = {
@@ -394,7 +397,7 @@ private fun ReportItem(
                         showDeleteConfirm = false
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = TechAssistColors.Error
+                        containerColor = themeColors.error
                     )
                 ) {
                     Text("Sil")
@@ -402,10 +405,10 @@ private fun ReportItem(
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirm = false }) {
-                    Text("İptal", color = TechAssistColors.TextSecondary)
+                    Text("İptal", color = themeColors.textSecondary)
                 }
             },
-            containerColor = TechAssistColors.Surface
+            containerColor = themeColors.surface
         )
     }
 }

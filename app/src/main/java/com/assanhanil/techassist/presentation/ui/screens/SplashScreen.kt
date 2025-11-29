@@ -15,7 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.assanhanil.techassist.presentation.ui.theme.TechAssistColors
+import com.assanhanil.techassist.presentation.ui.theme.LocalThemeColors
 import kotlinx.coroutines.delay
 
 private const val SPLASH_DURATION_MS = 2500L
@@ -26,13 +26,15 @@ private const val SPLASH_DURATION_MS = 2500L
  * Features:
  * - Animated logo with scale and fade effects
  * - Tagline "Operational Reporting System"
- * - Industrial Dark Mode theme
+ * - Dynamic theme support
  * - Neon Blue accents
  */
 @Composable
 fun SplashScreen(
     onSplashComplete: () -> Unit = {}
 ) {
+    val themeColors = LocalThemeColors.current
+    
     // Animation states
     var startAnimation by remember { mutableStateOf(false) }
     
@@ -89,7 +91,7 @@ fun SplashScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(TechAssistColors.Background),
+            .background(themeColors.background),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -112,7 +114,7 @@ fun SplashScreen(
                         fontSize = 42.sp,
                         letterSpacing = 4.sp
                     ),
-                    color = TechAssistColors.Primary.copy(alpha = glowAlpha * 0.3f),
+                    color = themeColors.primary.copy(alpha = glowAlpha * 0.3f),
                     textAlign = TextAlign.Center,
                     modifier = Modifier.offset(x = 2.dp, y = 2.dp)
                 )
@@ -125,7 +127,7 @@ fun SplashScreen(
                         fontSize = 42.sp,
                         letterSpacing = 4.sp
                     ),
-                    color = TechAssistColors.Primary,
+                    color = themeColors.primary,
                     textAlign = TextAlign.Center
                 )
             }
@@ -139,7 +141,7 @@ fun SplashScreen(
                     fontWeight = FontWeight.Light,
                     letterSpacing = 8.sp
                 ),
-                color = TechAssistColors.TextSecondary,
+                color = themeColors.textSecondary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .scale(logoScale)
@@ -157,9 +159,9 @@ fun SplashScreen(
                     .background(
                         brush = Brush.horizontalGradient(
                             colors = listOf(
-                                TechAssistColors.Primary.copy(alpha = 0f),
-                                TechAssistColors.Primary,
-                                TechAssistColors.Primary.copy(alpha = 0f)
+                                themeColors.primary.copy(alpha = 0f),
+                                themeColors.primary,
+                                themeColors.primary.copy(alpha = 0f)
                             )
                         )
                     )
@@ -174,7 +176,7 @@ fun SplashScreen(
                     fontWeight = FontWeight.Normal,
                     letterSpacing = 2.sp
                 ),
-                color = TechAssistColors.TextSecondary,
+                color = themeColors.textSecondary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.alpha(taglineAlpha)
             )
@@ -188,7 +190,7 @@ fun SplashScreen(
                     fontWeight = FontWeight.Medium,
                     letterSpacing = 4.sp
                 ),
-                color = TechAssistColors.Primary.copy(alpha = 0.7f),
+                color = themeColors.primary.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center,
                 modifier = Modifier.alpha(taglineAlpha)
             )
@@ -204,7 +206,7 @@ fun SplashScreen(
             Text(
                 text = "Endüstriyel Mühendislik Platformu",
                 style = MaterialTheme.typography.bodySmall,
-                color = TechAssistColors.TextDisabled,
+                color = themeColors.textDisabled,
                 textAlign = TextAlign.Center
             )
         }
