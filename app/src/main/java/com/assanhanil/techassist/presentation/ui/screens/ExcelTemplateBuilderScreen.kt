@@ -33,6 +33,11 @@ import com.assanhanil.techassist.service.ExcelService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.apache.poi.ss.usermodel.BorderStyle
+import org.apache.poi.ss.usermodel.FillPatternType
+import org.apache.poi.ss.usermodel.HorizontalAlignment
+import org.apache.poi.ss.usermodel.IndexedColors
+import org.apache.poi.ss.usermodel.VerticalAlignment
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -491,7 +496,7 @@ fun ExcelTemplateBuilderScreen(
                     
                     OutlinedTextField(
                         value = newColumnWidth,
-                        onValueChange = { newColumnWidth = it.filter { c -> c.isDigit() } },
+                        onValueChange = { newColumnWidth = it.filter { char -> char.isDigit() } },
                         label = { Text("Sütun Genişliği") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
@@ -578,7 +583,7 @@ fun ExcelTemplateBuilderScreen(
                     
                     OutlinedTextField(
                         value = editColumnWidth,
-                        onValueChange = { editColumnWidth = it.filter { c -> c.isDigit() } },
+                        onValueChange = { editColumnWidth = it.filter { char -> char.isDigit() } },
                         label = { Text("Sütun Genişliği") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
@@ -661,8 +666,8 @@ fun ExcelTemplateBuilderScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        // TODO: Save template to database
-                        Toast.makeText(context, "Şablon kaydedildi!", Toast.LENGTH_SHORT).show()
+                        // TODO: Implement database save when Room DAO is added
+                        Toast.makeText(context, "Şablon kaydetme özelliği yakında eklenecek", Toast.LENGTH_SHORT).show()
                         showSaveDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(
@@ -706,25 +711,25 @@ private suspend fun generateExcelFromTemplate(
         font.fontHeightInPoints = 11
         setFont(font)
         
-        fillForegroundColor = org.apache.poi.ss.usermodel.IndexedColors.GREY_25_PERCENT.index
-        fillPattern = org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND
+        fillForegroundColor = IndexedColors.GREY_25_PERCENT.index
+        fillPattern = FillPatternType.SOLID_FOREGROUND
         
-        alignment = org.apache.poi.ss.usermodel.HorizontalAlignment.CENTER
-        verticalAlignment = org.apache.poi.ss.usermodel.VerticalAlignment.CENTER
+        alignment = HorizontalAlignment.CENTER
+        verticalAlignment = VerticalAlignment.CENTER
         
-        borderTop = org.apache.poi.ss.usermodel.BorderStyle.THIN
-        borderBottom = org.apache.poi.ss.usermodel.BorderStyle.THIN
-        borderLeft = org.apache.poi.ss.usermodel.BorderStyle.THIN
-        borderRight = org.apache.poi.ss.usermodel.BorderStyle.THIN
+        borderTop = BorderStyle.THIN
+        borderBottom = BorderStyle.THIN
+        borderLeft = BorderStyle.THIN
+        borderRight = BorderStyle.THIN
     }
     
     val dataStyle = workbook.createCellStyle().apply {
-        verticalAlignment = org.apache.poi.ss.usermodel.VerticalAlignment.CENTER
+        verticalAlignment = VerticalAlignment.CENTER
         
-        borderTop = org.apache.poi.ss.usermodel.BorderStyle.THIN
-        borderBottom = org.apache.poi.ss.usermodel.BorderStyle.THIN
-        borderLeft = org.apache.poi.ss.usermodel.BorderStyle.THIN
-        borderRight = org.apache.poi.ss.usermodel.BorderStyle.THIN
+        borderTop = BorderStyle.THIN
+        borderBottom = BorderStyle.THIN
+        borderLeft = BorderStyle.THIN
+        borderRight = BorderStyle.THIN
     }
     
     // Create rows
