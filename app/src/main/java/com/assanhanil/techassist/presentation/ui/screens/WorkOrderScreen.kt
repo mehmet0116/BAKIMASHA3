@@ -756,7 +756,7 @@ private suspend fun exportWorkOrdersToExcel(
         cell.cellStyle = dataStyle
     }
     
-    val exportSessionId = System.currentTimeMillis()
+    val exportSessionId = java.util.UUID.randomUUID().toString().take(8)
     val tempFiles = mutableListOf<File>()
     
     try {
@@ -803,7 +803,7 @@ private suspend fun exportWorkOrdersToExcel(
             
             // Fotoğraf
             item.bitmap?.let { bitmap ->
-                val tempImageFile = File(context.cacheDir, "workorder_${exportSessionId}_${index}.jpg")
+                val tempImageFile = File(context.cacheDir, "techassist_workorder_${exportSessionId}_${index}.jpg")
                 FileOutputStream(tempImageFile).use { outputStream ->
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
                 }
@@ -830,6 +830,6 @@ private suspend fun exportWorkOrdersToExcel(
         
         outputFile
     } finally {
-        tempFiles.forEach { it.delete() }
+        tempFiles.forEach { file -> runCatching { file.delete() } }
     }
 }
