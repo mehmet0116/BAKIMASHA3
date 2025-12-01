@@ -260,7 +260,6 @@ fun DrawerContent(
             Screen.ElectricalWizard,
             Screen.Reports,
             Screen.ExcelTemplateBuilder,
-            Screen.Recipes,
             Screen.Camera,
             Screen.Settings
         )
