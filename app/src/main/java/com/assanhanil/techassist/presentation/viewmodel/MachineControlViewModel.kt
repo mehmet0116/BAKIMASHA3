@@ -100,6 +100,7 @@ class MachineControlViewModel(
         title: String,
         description: String,
         controlItems: List<ControlItemData>,
+        operatorIds: List<Long> = emptyList(),
         existingId: Long = 0,
         onSuccess: () -> Unit = {}
     ) {
@@ -109,7 +110,8 @@ class MachineControlViewModel(
             description = description,
             createdAt = if (existingId == 0L) System.currentTimeMillis() else _selectedMachineControl.value?.createdAt ?: System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis(),
-            controlItems = controlItems
+            controlItems = controlItems,
+            operatorIds = operatorIds
         )
         
         saveMachineControl(machineControl, onSuccess)

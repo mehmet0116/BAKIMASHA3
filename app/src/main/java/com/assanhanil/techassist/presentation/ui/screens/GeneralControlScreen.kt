@@ -36,11 +36,13 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.assanhanil.techassist.domain.model.ControlItemData
 import com.assanhanil.techassist.domain.model.MachineControl
+import com.assanhanil.techassist.domain.model.Operator
 import com.assanhanil.techassist.domain.model.SecurityStatus
 import com.assanhanil.techassist.presentation.ui.components.GlassCard
 import com.assanhanil.techassist.presentation.ui.components.NeonCard
 import com.assanhanil.techassist.presentation.ui.theme.LocalThemeColors
 import com.assanhanil.techassist.presentation.viewmodel.MachineControlViewModel
+import com.assanhanil.techassist.presentation.viewmodel.OperatorViewModel
 import com.assanhanil.techassist.service.ExcelService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -68,17 +70,19 @@ data class ControlItem(
  * 
  * Features:
  * - Machine/Title creation and persistence (Başlık oluşturma ve kaydetme)
+ * - Operator selection for controls (Operatör seçimi)
  * - Security Control section with photo capture (Güvenlik Kontrol)
  * - Security status options: Active/Inactive (Güvenlik Devrede Aktif / Devrede Değil)
  * - Save/Delete functionality for machines
  * - Merge All button to combine all machine data (Hepsini Birleştir)
  * - Share and Save with user-selectable destinations
- * - Excel export with images embedded inside cells
+ * - Excel export with images and operators embedded
  */
 @Composable
 fun GeneralControlScreen(
     excelService: ExcelService,
     machineControlViewModel: MachineControlViewModel,
+    operatorViewModel: OperatorViewModel,
     modifier: Modifier = Modifier
 ) {
     val themeColors = LocalThemeColors.current
@@ -87,6 +91,9 @@ fun GeneralControlScreen(
     
     // Collect saved machine controls from database
     val savedMachineControls by machineControlViewModel.machineControls.collectAsState()
+    
+    // Collect all available operators
+    val allOperators by operatorViewModel.operators.collectAsState()
     
     var hasCameraPermission by remember {
         mutableStateOf(
@@ -103,6 +110,9 @@ fun GeneralControlScreen(
     var controlItems by remember { mutableStateOf<List<ControlItem>>(emptyList()) }
     var nextItemId by remember { mutableStateOf(1) }
     
+    // Selected operators for current machine
+    var selectedOperatorIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    
     // Dialog states
     var showMachineTitleDialog by remember { mutableStateOf(false) }
     var showSecurityControlDialog by remember { mutableStateOf(false) }
@@ -110,10 +120,12 @@ fun GeneralControlScreen(
     var showMergeDialog by remember { mutableStateOf(false) }
     var showSaveLocationDialog by remember { mutableStateOf(false) }
     var showSavedMachinesDialog by remember { mutableStateOf(false) }
+    var showOperatorSelectionDialog by remember { mutableStateOf(false) }
     
     var pendingBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var selectedItem by remember { mutableStateOf<ControlItem?>(null) }
     var mergedFile by remember { mutableStateOf<File?>(null) }
+    var mergedOperatorNames by remember { mutableStateOf<List<String>>(emptyList()) }
     
     // Selected machines for merging
     var selectedMachinesForMerge by remember { mutableStateOf<Set<Long>>(emptySet()) }
@@ -227,6 +239,90 @@ fun GeneralControlScreen(
                 Icon(Icons.Default.FolderOpen, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(4.dp))
                 Text("Kayıtlı (${savedMachineControls.size})")
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // Operators Section - Always visible
+        GlassCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Group,
+                            contentDescription = null,
+                            tint = themeColors.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Kontrol Yapan Operatörler",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = themeColors.textPrimary,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    
+                    FilledTonalButton(
+                        onClick = { showOperatorSelectionDialog = true },
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = themeColors.primary.copy(alpha = 0.2f),
+                            contentColor = themeColors.primary
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PersonAdd,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Seç")
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                if (selectedOperatorIds.isEmpty()) {
+                    Text(
+                        text = "Henüz operatör seçilmedi",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = themeColors.textDisabled
+                    )
+                } else {
+                    val selectedOperators = allOperators.filter { it.id in selectedOperatorIds }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        selectedOperators.forEach { operator ->
+                            AssistChip(
+                                onClick = { 
+                                    selectedOperatorIds = selectedOperatorIds - operator.id
+                                },
+                                label = { Text(operator.name) },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Person,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                },
+                                trailingIcon = {
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = "Kaldır",
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            )
+                        }
+                    }
+                }
             }
         }
         
@@ -433,6 +529,7 @@ fun GeneralControlScreen(
                                 title = currentMachineTitle,
                                 description = "",
                                 controlItems = controlItemsData,
+                                operatorIds = selectedOperatorIds.toList(),
                                 existingId = currentMachineId
                             ) {
                                 Toast.makeText(context, "Makina kaydedildi: $currentMachineTitle", Toast.LENGTH_SHORT).show()
@@ -461,12 +558,14 @@ fun GeneralControlScreen(
                                     currentMachineId = 0
                                     controlItems = emptyList()
                                     nextItemId = 1
+                                    selectedOperatorIds = emptySet()
                                 }
                             }
                         } else {
                             currentMachineTitle = ""
                             controlItems = emptyList()
                             nextItemId = 1
+                            selectedOperatorIds = emptySet()
                         }
                     },
                     modifier = Modifier.weight(1f),
@@ -513,6 +612,7 @@ fun GeneralControlScreen(
                 currentMachineId = 0
                 controlItems = emptyList()
                 nextItemId = 1
+                selectedOperatorIds = emptySet()
                 showMachineTitleDialog = false
                 Toast.makeText(context, "Makina oluşturuldu: $title", Toast.LENGTH_SHORT).show()
             }
@@ -527,6 +627,8 @@ fun GeneralControlScreen(
             onSelect = { machine ->
                 currentMachineTitle = machine.title
                 currentMachineId = machine.id
+                // Load operators from saved machine
+                selectedOperatorIds = machine.operatorIds.toSet()
                 // Load control items from saved machine
                 controlItems = machine.controlItems.mapNotNull { data ->
                     val bitmap = loadBitmapFromFile(data.imagePath)
@@ -621,8 +723,10 @@ fun GeneralControlScreen(
     if (showMergeDialog) {
         MergeDialog(
             machines = savedMachineControls,
+            allOperators = allOperators,
             currentMachineTitle = currentMachineTitle,
             currentControlItems = controlItems,
+            currentOperatorIds = selectedOperatorIds,
             selectedMachines = selectedMachinesForMerge,
             onSelectionChange = { selectedMachinesForMerge = it },
             onDismiss = { showMergeDialog = false },
@@ -631,16 +735,19 @@ fun GeneralControlScreen(
                     try {
                         val machinesToMerge = savedMachineControls.filter { it.id in selectedMachinesForMerge }
                         val allItems = mutableListOf<Pair<String, ControlItem>>()
+                        val allOperatorIds = mutableSetOf<Long>()
                         
-                        // Add current machine items if selected
+                        // Add current machine items and operators if selected
                         if (includeCurrentMachine && controlItems.isNotEmpty()) {
                             controlItems.forEach { item ->
                                 allItems.add(currentMachineTitle to item)
                             }
+                            allOperatorIds.addAll(selectedOperatorIds)
                         }
                         
-                        // Add saved machine items
+                        // Add saved machine items and operators
                         machinesToMerge.forEach { machine ->
+                            allOperatorIds.addAll(machine.operatorIds)
                             machine.controlItems.forEach { data ->
                                 val bitmap = loadBitmapFromFile(data.imagePath)
                                 bitmap?.let {
@@ -658,8 +765,14 @@ fun GeneralControlScreen(
                             }
                         }
                         
+                        // Get operator names for Excel export
+                        val operatorNames = allOperators
+                            .filter { it.id in allOperatorIds }
+                            .map { it.name }
+                        mergedOperatorNames = operatorNames
+                        
                         if (allItems.isNotEmpty()) {
-                            val file = exportMergedToExcel(context, excelService, allItems)
+                            val file = exportMergedToExcel(context, excelService, allItems, operatorNames)
                             mergedFile = file
                             showMergeDialog = false
                             showSaveLocationDialog = true
@@ -688,6 +801,16 @@ fun GeneralControlScreen(
                 }
                 showSaveLocationDialog = false
             }
+        )
+    }
+    
+    // Operator Selection Dialog
+    if (showOperatorSelectionDialog) {
+        OperatorSelectionDialog(
+            allOperators = allOperators,
+            selectedOperatorIds = selectedOperatorIds,
+            onSelectionChange = { selectedOperatorIds = it },
+            onDismiss = { showOperatorSelectionDialog = false }
         )
     }
 }
@@ -1244,8 +1367,10 @@ private fun ControlItemDetailDialog(
 @Composable
 private fun MergeDialog(
     machines: List<MachineControl>,
+    allOperators: List<Operator>,
     currentMachineTitle: String,
     currentControlItems: List<ControlItem>,
+    currentOperatorIds: Set<Long>,
     selectedMachines: Set<Long>,
     onSelectionChange: (Set<Long>) -> Unit,
     onDismiss: () -> Unit,
@@ -1253,6 +1378,19 @@ private fun MergeDialog(
 ) {
     val themeColors = LocalThemeColors.current
     var includeCurrentMachine by remember { mutableStateOf(currentControlItems.isNotEmpty()) }
+    
+    // Calculate all operators involved in selected machines
+    val allSelectedOperatorIds = remember(selectedMachines, includeCurrentMachine, currentOperatorIds) {
+        val ids = mutableSetOf<Long>()
+        if (includeCurrentMachine) {
+            ids.addAll(currentOperatorIds)
+        }
+        machines.filter { it.id in selectedMachines }.forEach { machine ->
+            ids.addAll(machine.operatorIds)
+        }
+        ids
+    }
+    val selectedOperators = allOperators.filter { it.id in allSelectedOperatorIds }
     
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1356,6 +1494,39 @@ private fun MergeDialog(
                     }
                     Divider(color = themeColors.glassBorder)
                 }
+                
+                // Operators Summary Section
+                if (selectedOperators.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Text(
+                        text = "Kontrol Yapan Operatörler:",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = themeColors.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        selectedOperators.forEach { operator ->
+                            AssistChip(
+                                onClick = { },
+                                label = { Text(operator.name, style = MaterialTheme.typography.bodySmall) },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Person,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            )
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
@@ -1426,6 +1597,122 @@ private fun SaveShareDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("Kapat", color = themeColors.textSecondary)
+            }
+        },
+        containerColor = themeColors.surface
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun OperatorSelectionDialog(
+    allOperators: List<Operator>,
+    selectedOperatorIds: Set<Long>,
+    onSelectionChange: (Set<Long>) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val themeColors = LocalThemeColors.current
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Operatör Seç",
+                color = themeColors.primary,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 400.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                if (allOperators.isEmpty()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PersonOff,
+                            contentDescription = null,
+                            tint = themeColors.textDisabled,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Henüz operatör eklenmedi.\nAyarlar'dan operatör ekleyebilirsiniz.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = themeColors.textDisabled
+                        )
+                    }
+                } else {
+                    Text(
+                        text = "Kontrol yapan operatörleri seçin:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = themeColors.textSecondary
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    allOperators.forEach { operator ->
+                        val isSelected = operator.id in selectedOperatorIds
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    onSelectionChange(
+                                        if (isSelected) selectedOperatorIds - operator.id
+                                        else selectedOperatorIds + operator.id
+                                    )
+                                }
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = isSelected,
+                                onCheckedChange = { checked ->
+                                    onSelectionChange(
+                                        if (checked) selectedOperatorIds + operator.id
+                                        else selectedOperatorIds - operator.id
+                                    )
+                                },
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = themeColors.primary
+                                )
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = operator.name,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = themeColors.textPrimary,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                if (operator.department.isNotEmpty()) {
+                                    Text(
+                                        text = operator.department,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = themeColors.textSecondary
+                                    )
+                                }
+                            }
+                        }
+                        Divider(color = themeColors.glassBorder)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(containerColor = themeColors.primary)
+            ) {
+                Text("Tamam")
             }
         },
         containerColor = themeColors.surface
@@ -1504,7 +1791,8 @@ private fun shareExcelFile(context: Context, file: File) {
 private suspend fun exportMergedToExcel(
     context: Context,
     excelService: ExcelService,
-    allItems: List<Pair<String, ControlItem>>
+    allItems: List<Pair<String, ControlItem>>,
+    operatorNames: List<String> = emptyList()
 ): File = withContext(Dispatchers.IO) {
     val workbook = excelService.createWorkbook()
     val sheet = excelService.createSheetWithHeader(
@@ -1524,8 +1812,19 @@ private suspend fun exportMergedToExcel(
     
     val dataStyle = excelService.createDataStyle(workbook)
     
+    // Add Operators row if operators are available
+    var startDataRow = 5
+    if (operatorNames.isNotEmpty()) {
+        val operatorsRow = sheet.createRow(4)
+        operatorsRow.heightInPoints = 20f
+        val operatorsCell = operatorsRow.createCell(0)
+        operatorsCell.setCellValue("Kontrol Yapan Operatörler: ${operatorNames.joinToString(", ")}")
+        operatorsCell.cellStyle = dataStyle
+        startDataRow = 6
+    }
+    
     // Add header row
-    val headerRow = sheet.createRow(5)
+    val headerRow = sheet.createRow(startDataRow)
     headerRow.heightInPoints = 25f
     val headers = listOf("No", "Makina", "Başlık", "Notlar", "Tarih", "Durum", "Fotoğraf")
     headers.forEachIndexed { index, header ->
@@ -1538,7 +1837,7 @@ private suspend fun exportMergedToExcel(
     val tempFiles = mutableListOf<File>()
     
     try {
-        var currentRow = 6
+        var currentRow = startDataRow + 1
         allItems.forEachIndexed { index, (machineTitle, item) ->
             val row = sheet.createRow(currentRow)
             row.heightInPoints = 150f

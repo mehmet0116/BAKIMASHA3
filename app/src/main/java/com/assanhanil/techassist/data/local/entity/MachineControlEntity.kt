@@ -16,5 +16,6 @@ data class MachineControlEntity(
     val createdAt: Long,
     val updatedAt: Long,
     val controlItemsJson: String = "[]",  // JSON serialized list of control items
+    val operatorIdsJson: String = "[]",   // JSON serialized list of operator IDs
     val isActive: Boolean = true
 )

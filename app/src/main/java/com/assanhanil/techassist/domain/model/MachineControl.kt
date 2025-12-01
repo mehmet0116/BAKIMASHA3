@@ -11,6 +11,7 @@ data class MachineControl(
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
     val controlItems: List<ControlItemData> = emptyList(),
+    val operatorIds: List<Long> = emptyList(),
     val isActive: Boolean = true
 )
 

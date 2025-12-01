@@ -1,5 +1,6 @@
 package com.assanhanil.techassist.data.repository
 
+import android.util.Log
 import com.assanhanil.techassist.data.local.dao.MachineControlDao
 import com.assanhanil.techassist.data.local.entity.MachineControlEntity
 import com.assanhanil.techassist.domain.model.ControlItemData
@@ -9,6 +10,7 @@ import com.assanhanil.techassist.domain.repository.MachineControlRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 
 /**
@@ -20,6 +22,7 @@ class MachineControlRepositoryImpl(
 ) : MachineControlRepository {
 
     companion object {
+        private const val TAG = "MachineControlRepo"
         private const val EMPTY_JSON_ARRAY = "[]"
     }
 
@@ -64,6 +67,7 @@ class MachineControlRepositoryImpl(
             createdAt = createdAt,
             updatedAt = updatedAt,
             controlItems = parseControlItemsJson(controlItemsJson),
+            operatorIds = parseOperatorIdsJson(operatorIdsJson),
             isActive = isActive
         )
     }
@@ -76,6 +80,7 @@ class MachineControlRepositoryImpl(
             createdAt = createdAt,
             updatedAt = updatedAt,
             controlItemsJson = controlItemsToJson(controlItems),
+            operatorIdsJson = operatorIdsToJson(operatorIds),
             isActive = isActive
         )
     }
@@ -129,6 +134,36 @@ class MachineControlRepositoryImpl(
             })
         }
         
+        return jsonArray.toString()
+    }
+
+    /**
+     * Parse JSON string to list of operator IDs.
+     */
+    private fun parseOperatorIdsJson(json: String): List<Long> {
+        if (json.isBlank() || json == EMPTY_JSON_ARRAY) return emptyList()
+        
+        return try {
+            val jsonArray = JSONArray(json)
+            val ids = mutableListOf<Long>()
+            
+            for (i in 0 until jsonArray.length()) {
+                ids.add(jsonArray.getLong(i))
+            }
+            
+            ids
+        } catch (e: JSONException) {
+            Log.e(TAG, "Error parsing operator IDs JSON: $json", e)
+            emptyList()
+        }
+    }
+
+    /**
+     * Convert list of operator IDs to JSON string.
+     */
+    private fun operatorIdsToJson(ids: List<Long>): String {
+        val jsonArray = JSONArray()
+        ids.forEach { jsonArray.put(it) }
         return jsonArray.toString()
     }
 

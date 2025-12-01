@@ -17,15 +17,18 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.assanhanil.techassist.data.preferences.ThemePreferences
+import com.assanhanil.techassist.domain.model.Operator
 import com.assanhanil.techassist.presentation.ui.components.GlassCard
 import com.assanhanil.techassist.presentation.ui.components.NeonCard
 import com.assanhanil.techassist.presentation.ui.theme.LocalThemeColors
+import com.assanhanil.techassist.presentation.viewmodel.OperatorViewModel
 
 /**
  * Settings Screen - Application configuration.
  * 
  * Features:
  * - User profile settings
+ * - Operator management (add/remove operators)
  * - Theme settings (Dark/Light mode)
  * - Notification preferences
  * - Data management
@@ -35,16 +38,21 @@ import com.assanhanil.techassist.presentation.ui.theme.LocalThemeColors
 fun SettingsScreen(
     themePreferences: ThemePreferences,
     isDarkMode: Boolean,
+    operatorViewModel: OperatorViewModel,
     modifier: Modifier = Modifier
 ) {
     val themeColors = LocalThemeColors.current
     
-    var operatorName by remember { mutableStateOf("") }
     var autoSaveEnabled by remember { mutableStateOf(true) }
     var notificationsEnabled by remember { mutableStateOf(true) }
     val useSystemTheme by themePreferences.useSystemTheme.collectAsState()
     var showAboutDialog by remember { mutableStateOf(false) }
     var showClearDataDialog by remember { mutableStateOf(false) }
+    var showAddOperatorDialog by remember { mutableStateOf(false) }
+    var showDeleteOperatorDialog by remember { mutableStateOf<Operator?>(null) }
+    
+    // Collect operators from ViewModel
+    val operators by operatorViewModel.operators.collectAsState()
     
     Column(
         modifier = modifier
@@ -71,35 +79,82 @@ fun SettingsScreen(
         
         Spacer(modifier = Modifier.height(24.dp))
         
-        // Profile Section
-        SettingsSectionHeader(title = "Profil")
+        // Operators Section
+        SettingsSectionHeader(title = "Operatörler")
         
         NeonCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp)) {
-                OutlinedTextField(
-                    value = operatorName,
-                    onValueChange = { operatorName = it },
-                    label = { Text("Operatör Adı") },
-                    placeholder = { Text("Adınızı girin") },
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = null,
-                            tint = themeColors.primary
-                        )
-                    },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = themeColors.primary,
-                        unfocusedBorderColor = themeColors.glassBorder
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Kayıtlı Operatörler",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = themeColors.textPrimary,
+                        fontWeight = FontWeight.Medium
                     )
-                )
+                    
+                    FilledTonalButton(
+                        onClick = { showAddOperatorDialog = true },
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = themeColors.primary.copy(alpha = 0.2f),
+                            contentColor = themeColors.primary
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PersonAdd,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Ekle")
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                if (operators.isEmpty()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PersonOff,
+                            contentDescription = null,
+                            tint = themeColors.textDisabled,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Henüz operatör eklenmedi",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = themeColors.textDisabled
+                        )
+                    }
+                } else {
+                    operators.forEach { operator ->
+                        OperatorItem(
+                            operator = operator,
+                            onDelete = { showDeleteOperatorDialog = operator }
+                        )
+                        if (operator != operators.last()) {
+                            Divider(
+                                color = themeColors.glassBorder.copy(alpha = 0.3f),
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            )
+                        }
+                    }
+                }
                 
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Text(
-                    text = "Bu isim raporlarda kullanılacaktır",
+                    text = "Operatörler genel kontrol raporlarında kullanılacaktır",
                     style = MaterialTheme.typography.bodySmall,
                     color = themeColors.textDisabled
                 )
@@ -355,6 +410,58 @@ fun SettingsScreen(
             containerColor = themeColors.surface
         )
     }
+    
+    // Add Operator Dialog
+    if (showAddOperatorDialog) {
+        AddOperatorDialog(
+            onDismiss = { showAddOperatorDialog = false },
+            onAdd = { name, department ->
+                operatorViewModel.addOperator(name, department) {
+                    showAddOperatorDialog = false
+                }
+            }
+        )
+    }
+    
+    // Delete Operator Confirmation Dialog
+    showDeleteOperatorDialog?.let { operator ->
+        AlertDialog(
+            onDismissRequest = { showDeleteOperatorDialog = null },
+            title = {
+                Text(
+                    text = "Operatörü Sil",
+                    color = themeColors.error,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = "\"${operator.name}\" operatörünü silmek istediğinizden emin misiniz?",
+                    color = themeColors.textSecondary
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        operatorViewModel.deleteOperator(operator.id) {
+                            showDeleteOperatorDialog = null
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = themeColors.error
+                    )
+                ) {
+                    Text("Sil")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteOperatorDialog = null }) {
+                    Text("İptal", color = themeColors.textSecondary)
+                }
+            },
+            containerColor = themeColors.surface
+        )
+    }
 }
 
 @Composable
@@ -495,4 +602,140 @@ private fun InfoRow(label: String, value: String) {
             fontWeight = FontWeight.Medium
         )
     }
+}
+
+@Composable
+private fun OperatorItem(
+    operator: Operator,
+    onDelete: () -> Unit
+) {
+    val themeColors = LocalThemeColors.current
+    
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Default.Person,
+            contentDescription = null,
+            tint = themeColors.primary,
+            modifier = Modifier.size(24.dp)
+        )
+        
+        Spacer(modifier = Modifier.width(12.dp))
+        
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = operator.name,
+                style = MaterialTheme.typography.bodyLarge,
+                color = themeColors.textPrimary,
+                fontWeight = FontWeight.Medium
+            )
+            if (operator.department.isNotEmpty()) {
+                Text(
+                    text = operator.department,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = themeColors.textSecondary
+                )
+            }
+        }
+        
+        IconButton(onClick = onDelete) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = "Sil",
+                tint = themeColors.error,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun AddOperatorDialog(
+    onDismiss: () -> Unit,
+    onAdd: (String, String) -> Unit
+) {
+    val themeColors = LocalThemeColors.current
+    var name by remember { mutableStateOf("") }
+    var department by remember { mutableStateOf("") }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Yeni Operatör Ekle",
+                color = themeColors.primary,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Operatör Adı") },
+                    placeholder = { Text("Ad Soyad") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = null,
+                            tint = themeColors.primary
+                        )
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = themeColors.primary,
+                        unfocusedBorderColor = themeColors.glassBorder
+                    )
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                OutlinedTextField(
+                    value = department,
+                    onValueChange = { department = it },
+                    label = { Text("Departman (Opsiyonel)") },
+                    placeholder = { Text("Örn: Bakım") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Business,
+                            contentDescription = null,
+                            tint = themeColors.primary
+                        )
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = themeColors.primary,
+                        unfocusedBorderColor = themeColors.glassBorder
+                    )
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { 
+                    if (name.isNotBlank()) {
+                        onAdd(name.trim(), department.trim())
+                    }
+                },
+                enabled = name.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(containerColor = themeColors.primary)
+            ) {
+                Icon(Icons.Default.PersonAdd, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Kaydet")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("İptal", color = themeColors.textSecondary)
+            }
+        },
+        containerColor = themeColors.surface
+    )
 }
