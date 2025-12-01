@@ -528,7 +528,7 @@ fun GeneralControlScreen(
                 ),
                 enabled = controlItems.isNotEmpty()
             ) {
-                Icon(Icons.Default.Clear, contentDescription = null, modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.ClearAll, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(4.dp))
                 Text("Kontrolleri Temizle")
             }
@@ -1629,7 +1629,6 @@ private fun ControlItemDetailDialog(
     )
 }
 
-@Composable
 @Composable
 private fun SaveShareDialog(
     onDismiss: () -> Unit,

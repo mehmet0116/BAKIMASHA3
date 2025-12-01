@@ -1,12 +1,15 @@
 package com.assanhanil.techassist.presentation.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.assanhanil.techassist.domain.model.MachineName
 import com.assanhanil.techassist.domain.repository.MachineNameRepository
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -28,6 +31,9 @@ class MachineNameViewModel(
             initialValue = emptyList()
         )
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
     /**
      * Save a new machine name.
      * If the name already exists, it will be ignored.
@@ -40,9 +46,11 @@ class MachineNameViewModel(
                 if (existing == null) {
                     machineNameRepository.saveMachineName(name)
                 }
+                _error.value = null
                 onSuccess()
             } catch (e: Exception) {
-                // Handle error silently
+                Log.e(TAG, "Error saving machine name: ${e.message}", e)
+                _error.value = "Makina adı kaydedilemedi: ${e.message}"
             }
         }
     }
@@ -54,11 +62,20 @@ class MachineNameViewModel(
         viewModelScope.launch {
             try {
                 machineNameRepository.deleteMachineName(id)
+                _error.value = null
                 onSuccess()
             } catch (e: Exception) {
-                // Handle error silently
+                Log.e(TAG, "Error deleting machine name: ${e.message}", e)
+                _error.value = "Makina adı silinemedi: ${e.message}"
             }
         }
+    }
+
+    /**
+     * Clear error message.
+     */
+    fun clearError() {
+        _error.value = null
     }
 
     /**
@@ -74,5 +91,9 @@ class MachineNameViewModel(
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }
+    }
+
+    companion object {
+        private const val TAG = "MachineNameViewModel"
     }
 }
