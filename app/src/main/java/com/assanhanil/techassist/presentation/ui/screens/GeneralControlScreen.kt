@@ -1012,6 +1012,7 @@ private fun TitleInputDialog(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SecurityControlDialog(
     itemNumber: Int,
