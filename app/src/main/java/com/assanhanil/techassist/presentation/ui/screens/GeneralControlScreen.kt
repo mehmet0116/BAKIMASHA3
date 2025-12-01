@@ -1971,7 +1971,6 @@ private suspend fun exportMergedToExcel(
     sheet.setColumnWidth(4, 20 * 256)  // Tarih
     sheet.setColumnWidth(5, 20 * 256)  // Durum
     sheet.setColumnWidth(6, 50 * 256)  // Fotoğraf
-    sheet.setColumnWidth(7, 40 * 256)  // Yapılacak İşler
     
     val dataStyle = excelService.createDataStyle(workbook)
     
@@ -1989,7 +1988,7 @@ private suspend fun exportMergedToExcel(
     // Add header row
     val headerRow = sheet.createRow(startDataRow)
     headerRow.heightInPoints = 25f
-    val headers = listOf("No", "Makina", "Başlık", "Notlar", "Tarih", "Durum", "Fotoğraf", "Yapılacak İşler")
+    val headers = listOf("No", "Makina", "Başlık", "Notlar", "Tarih", "Durum", "Fotoğraf")
     headers.forEachIndexed { index, header ->
         val cell = headerRow.createCell(index)
         cell.setCellValue(header)
@@ -2055,12 +2054,6 @@ private suspend fun exportMergedToExcel(
                 row = currentRow,
                 column = 6
             )
-            
-            // Yapılacak İşler (Work Order Details) - Only show if work order is required
-            row.createCell(7).apply {
-                setCellValue(if (item.requiresWorkOrder) item.workOrderDetails else "")
-                cellStyle = dataStyle
-            }
             
             currentRow++
         }
