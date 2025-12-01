@@ -9,6 +9,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -123,7 +124,7 @@ fun SettingsScreen(
                     }
                 )
                 
-                Divider(color = themeColors.glassBorder.copy(alpha = 0.3f))
+                HorizontalDivider(color = themeColors.glassBorder.copy(alpha = 0.3f))
                 
                 SettingsToggleItem(
                     icon = if (isDarkMode) Icons.Default.DarkMode else Icons.Default.LightMode,
@@ -155,7 +156,7 @@ fun SettingsScreen(
                     onCheckedChange = { autoSaveEnabled = it }
                 )
                 
-                Divider(color = themeColors.glassBorder.copy(alpha = 0.3f))
+                HorizontalDivider(color = themeColors.glassBorder.copy(alpha = 0.3f))
                 
                 SettingsToggleItem(
                     icon = Icons.Default.Notifications,
@@ -181,7 +182,7 @@ fun SettingsScreen(
                     onClick = { /* Backup functionality */ }
                 )
                 
-                Divider(color = themeColors.glassBorder.copy(alpha = 0.3f))
+                HorizontalDivider(color = themeColors.glassBorder.copy(alpha = 0.3f))
                 
                 SettingsClickableItem(
                     icon = Icons.Default.Restore,
@@ -190,7 +191,7 @@ fun SettingsScreen(
                     onClick = { /* Restore functionality */ }
                 )
                 
-                Divider(color = themeColors.glassBorder.copy(alpha = 0.3f))
+                HorizontalDivider(color = themeColors.glassBorder.copy(alpha = 0.3f))
                 
                 SettingsClickableItem(
                     icon = Icons.Default.DeleteForever,
@@ -216,7 +217,7 @@ fun SettingsScreen(
                     onClick = { showAboutDialog = true }
                 )
                 
-                Divider(color = themeColors.glassBorder.copy(alpha = 0.3f))
+                HorizontalDivider(color = themeColors.glassBorder.copy(alpha = 0.3f))
                 
                 SettingsClickableItem(
                     icon = Icons.Default.Policy,
@@ -225,7 +226,7 @@ fun SettingsScreen(
                     onClick = { /* Open privacy policy */ }
                 )
                 
-                Divider(color = themeColors.glassBorder.copy(alpha = 0.3f))
+                HorizontalDivider(color = themeColors.glassBorder.copy(alpha = 0.3f))
                 
                 SettingsClickableItem(
                     icon = Icons.Default.Help,
