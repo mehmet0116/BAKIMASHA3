@@ -759,7 +759,15 @@ private suspend fun exportWorkOrdersToExcel(
     }
     
     val exportSessionId = java.util.UUID.randomUUID().toString().take(8)
-    val tempFiles = mutableListOf<File>()
+    // Map index to temp file path for proper image reuse across sheets
+    val tempFilesMap = mutableMapOf<Int, File>()
+    
+    // Create "Yapılacak İşler" sheet at the beginning alongside main sheet
+    val yapilacakIslerSheet = excelService.createSheetWithHeader(
+        workbook = workbook,
+        sheetName = "Yapılacak İşler",
+        title = "Yapılacak İşler Detay"
+    )
     
     try {
         var currentRow = startDataRow + 1
@@ -809,7 +817,7 @@ private suspend fun exportWorkOrdersToExcel(
                 FileOutputStream(tempImageFile).use { outputStream ->
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
                 }
-                tempFiles.add(tempImageFile)
+                tempFilesMap[index] = tempImageFile
                 
                 excelService.embedImageInCell(
                     workbook = workbook,
@@ -823,12 +831,7 @@ private suspend fun exportWorkOrdersToExcel(
             currentRow++
         }
         
-        // Create "Yapılacak İşler" sheet with detailed work order information
-        val yapilacakIslerSheet = excelService.createSheetWithHeader(
-            workbook = workbook,
-            sheetName = "Yapılacak İşler",
-            title = "Yapılacak İşler Detay"
-        )
+        // Configure "Yapılacak İşler" sheet
         
         // Set column widths for Yapılacak İşler sheet
         yapilacakIslerSheet.setColumnWidth(0, 10 * 256)  // No
@@ -902,12 +905,12 @@ private suspend fun exportWorkOrdersToExcel(
                 cellStyle = dataStyle
             }
             
-            // Fotoğraf - reuse existing temp files
-            if (index < tempFiles.size) {
+            // Fotoğraf - reuse existing temp files using proper index mapping
+            tempFilesMap[index]?.let { tempFile ->
                 excelService.embedImageInCell(
                     workbook = workbook,
                     sheet = yapilacakIslerSheet,
-                    imagePath = tempFiles[index].absolutePath,
+                    imagePath = tempFile.absolutePath,
                     row = yiCurrentRow,
                     column = 6
                 )
@@ -925,6 +928,6 @@ private suspend fun exportWorkOrdersToExcel(
         
         outputFile
     } finally {
-        tempFiles.forEach { file -> runCatching { file.delete() } }
+        tempFilesMap.values.forEach { file -> runCatching { file.delete() } }
     }
 }
