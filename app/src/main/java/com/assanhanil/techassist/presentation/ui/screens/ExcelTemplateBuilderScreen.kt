@@ -98,31 +98,29 @@ fun ExcelTemplateBuilderScreen(
     var showEditColumnDialog by remember { mutableStateOf<TemplateColumn?>(null) }
     var showSaveDialog by remember { mutableStateOf(false) }
     var isGenerating by remember { mutableStateOf(false) }
-    var isSaving by remember { mutableStateOf(false) }
     var templateDescription by remember { mutableStateOf("") }
     var selectedCellPosition by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     var editingCellValue by remember { mutableStateOf("") }
     
-    // Observe save success state
+    // Observe ViewModel states
+    val isSaving by excelTemplateViewModel.isLoading.collectAsState()
     val saveSuccess by excelTemplateViewModel.saveSuccess.collectAsState()
     val saveError by excelTemplateViewModel.error.collectAsState()
     
     // Handle save success
-    LaunchedEffect(saveSuccess) {
+    LaunchedEffect(saveSuccess, excelTemplateViewModel) {
         if (saveSuccess) {
             Toast.makeText(context, "Şablon başarıyla kaydedildi", Toast.LENGTH_SHORT).show()
             excelTemplateViewModel.resetSaveSuccess()
             showSaveDialog = false
-            isSaving = false
         }
     }
     
     // Handle save error
-    LaunchedEffect(saveError) {
+    LaunchedEffect(saveError, excelTemplateViewModel) {
         saveError?.let { error ->
             Toast.makeText(context, error, Toast.LENGTH_LONG).show()
             excelTemplateViewModel.clearError()
-            isSaving = false
         }
     }
     
@@ -714,7 +712,6 @@ fun ExcelTemplateBuilderScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        isSaving = true
                         excelTemplateViewModel.saveTemplateFromBuilder(
                             name = templateName,
                             description = templateDescription,
