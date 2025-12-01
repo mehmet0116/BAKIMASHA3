@@ -678,7 +678,7 @@ fun GeneralControlScreen(
                     notes = notes,
                     bitmap = pendingBitmap!!,
                     timestamp = Date(),
-                    status = if (requiresWorkOrder) "İş Emri Gerekli" else "Kontrol Edildi",
+                    status = if (requiresWorkOrder) STATUS_WORK_ORDER_REQUIRED else "Kontrol Edildi",
                     securityStatus = SecurityStatus.NOT_SET,
                     requiresWorkOrder = requiresWorkOrder,
                     workOrderDetails = workOrderDetails
@@ -707,7 +707,7 @@ fun GeneralControlScreen(
                     notes = notes,
                     bitmap = pendingBitmap!!,
                     timestamp = Date(),
-                    status = if (requiresWorkOrder) "İş Emri Gerekli" else if (securityStatus == SecurityStatus.ACTIVE) "Güvenlik Aktif" else "Güvenlik Devre Dışı",
+                    status = if (requiresWorkOrder) STATUS_WORK_ORDER_REQUIRED else if (securityStatus == SecurityStatus.ACTIVE) "Güvenlik Aktif" else "Güvenlik Devre Dışı",
                     securityStatus = securityStatus,
                     requiresWorkOrder = requiresWorkOrder,
                     workOrderDetails = workOrderDetails
@@ -926,7 +926,7 @@ private fun ControlItemCard(
                 if (item.requiresWorkOrder && item.workOrderDetails.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Yapılacak İş: ${item.workOrderDetails}",
+                        text = "Yapılacak İşler: ${item.workOrderDetails}",
                         style = MaterialTheme.typography.bodySmall,
                         color = themeColors.error.copy(alpha = 0.8f),
                         maxLines = 1
@@ -1884,6 +1884,7 @@ private fun OperatorSelectionDialog(
 
 private const val FILE_PROVIDER_AUTHORITY_SUFFIX = ".fileprovider"
 private const val MAX_BITMAP_DIMENSION = 800
+private const val STATUS_WORK_ORDER_REQUIRED = "İş Emri Gerekli"
 
 private fun saveBitmapToFile(context: Context, bitmap: Bitmap, prefix: String): File {
     val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
