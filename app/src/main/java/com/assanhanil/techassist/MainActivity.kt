@@ -31,6 +31,7 @@ import com.assanhanil.techassist.presentation.ui.theme.TechAssistTheme
 import com.assanhanil.techassist.presentation.viewmodel.BearingFinderViewModel
 import com.assanhanil.techassist.presentation.viewmodel.ExcelTemplateViewModel
 import com.assanhanil.techassist.presentation.viewmodel.MachineControlViewModel
+import com.assanhanil.techassist.presentation.viewmodel.OperatorViewModel
 import com.assanhanil.techassist.service.ExcelService
 import kotlinx.coroutines.launch
 
@@ -63,6 +64,12 @@ class MainActivity : ComponentActivity() {
         )
     }
 
+    private val operatorViewModel: OperatorViewModel by viewModels {
+        OperatorViewModel.Factory(
+            (application as TechAssistApplication).operatorRepository
+        )
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
@@ -80,6 +87,7 @@ class MainActivity : ComponentActivity() {
                     bearingFinderViewModel = bearingFinderViewModel,
                     excelTemplateViewModel = excelTemplateViewModel,
                     machineControlViewModel = machineControlViewModel,
+                    operatorViewModel = operatorViewModel,
                     excelService = ExcelService(this),
                     themePreferences = themePreferences,
                     isDarkMode = isDarkTheme
@@ -95,6 +103,7 @@ fun TechAssistApp(
     bearingFinderViewModel: BearingFinderViewModel,
     excelTemplateViewModel: ExcelTemplateViewModel,
     machineControlViewModel: MachineControlViewModel,
+    operatorViewModel: OperatorViewModel,
     excelService: ExcelService,
     themePreferences: ThemePreferences,
     isDarkMode: Boolean
@@ -197,7 +206,8 @@ fun TechAssistApp(
                     composable(Screen.Settings.route) {
                         SettingsScreen(
                             themePreferences = themePreferences,
-                            isDarkMode = isDarkMode
+                            isDarkMode = isDarkMode,
+                            operatorViewModel = operatorViewModel
                         )
                     }
                     
@@ -211,7 +221,8 @@ fun TechAssistApp(
                     composable(Screen.GeneralControl.route) {
                         GeneralControlScreen(
                             excelService = excelService,
-                            machineControlViewModel = machineControlViewModel
+                            machineControlViewModel = machineControlViewModel,
+                            operatorViewModel = operatorViewModel
                         )
                     }
                 }

@@ -64,6 +64,7 @@ class MachineControlRepositoryImpl(
             createdAt = createdAt,
             updatedAt = updatedAt,
             controlItems = parseControlItemsJson(controlItemsJson),
+            operatorIds = parseOperatorIdsJson(operatorIdsJson),
             isActive = isActive
         )
     }
@@ -76,6 +77,7 @@ class MachineControlRepositoryImpl(
             createdAt = createdAt,
             updatedAt = updatedAt,
             controlItemsJson = controlItemsToJson(controlItems),
+            operatorIdsJson = operatorIdsToJson(operatorIds),
             isActive = isActive
         )
     }
@@ -129,6 +131,35 @@ class MachineControlRepositoryImpl(
             })
         }
         
+        return jsonArray.toString()
+    }
+
+    /**
+     * Parse JSON string to list of operator IDs.
+     */
+    private fun parseOperatorIdsJson(json: String): List<Long> {
+        if (json.isBlank() || json == EMPTY_JSON_ARRAY) return emptyList()
+        
+        return try {
+            val jsonArray = JSONArray(json)
+            val ids = mutableListOf<Long>()
+            
+            for (i in 0 until jsonArray.length()) {
+                ids.add(jsonArray.getLong(i))
+            }
+            
+            ids
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    /**
+     * Convert list of operator IDs to JSON string.
+     */
+    private fun operatorIdsToJson(ids: List<Long>): String {
+        val jsonArray = JSONArray()
+        ids.forEach { jsonArray.put(it) }
         return jsonArray.toString()
     }
 
