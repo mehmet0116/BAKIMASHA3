@@ -22,6 +22,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object ElectricalWizard : Screen("electrical_wizard", "Elektrik Sihirbazı", Icons.Default.Bolt)
     data object Reports : Screen("reports", "Raporlar", Icons.Default.Description)
     data object ExcelTemplateBuilder : Screen("excel_template_builder", "Excel Şablon Oluşturucu", Icons.Default.TableChart)
+    data object GeneralControl : Screen("general_control", "Genel Kontrol", Icons.Default.CheckCircle)
     data object Camera : Screen("camera", "Kamera", Icons.Default.CameraAlt)
     data object Settings : Screen("settings", "Ayarlar", Icons.Default.Settings)
 }

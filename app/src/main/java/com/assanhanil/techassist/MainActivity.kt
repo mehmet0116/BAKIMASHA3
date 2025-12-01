@@ -198,6 +198,12 @@ fun TechAssistApp(
                             excelTemplateViewModel = excelTemplateViewModel
                         )
                     }
+                    
+                    composable(Screen.GeneralControl.route) {
+                        GeneralControlScreen(
+                            excelService = excelService
+                        )
+                    }
                 }
             }
         }
@@ -256,6 +262,7 @@ fun DrawerContent(
             Screen.ElectricalWizard,
             Screen.Reports,
             Screen.ExcelTemplateBuilder,
+            Screen.GeneralControl,
             Screen.Camera,
             Screen.Settings
         )
@@ -340,6 +347,7 @@ private fun getScreenFromRoute(route: String?): Screen? {
         Screen.ElectricalWizard.route -> Screen.ElectricalWizard
         Screen.Reports.route -> Screen.Reports
         Screen.ExcelTemplateBuilder.route -> Screen.ExcelTemplateBuilder
+        Screen.GeneralControl.route -> Screen.GeneralControl
         Screen.Camera.route -> Screen.Camera
         Screen.Settings.route -> Screen.Settings
         else -> null
