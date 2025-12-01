@@ -823,6 +823,99 @@ private suspend fun exportWorkOrdersToExcel(
             currentRow++
         }
         
+        // Create "Yapılacak İşler" sheet with detailed work order information
+        val yapilacakIslerSheet = excelService.createSheetWithHeader(
+            workbook = workbook,
+            sheetName = "Yapılacak İşler",
+            title = "Yapılacak İşler Detay"
+        )
+        
+        // Set column widths for Yapılacak İşler sheet
+        yapilacakIslerSheet.setColumnWidth(0, 10 * 256)  // No
+        yapilacakIslerSheet.setColumnWidth(1, 30 * 256)  // Makina İsmi
+        yapilacakIslerSheet.setColumnWidth(2, 35 * 256)  // Kontrol Başlığı
+        yapilacakIslerSheet.setColumnWidth(3, 50 * 256)  // Açıklama (Notes)
+        yapilacakIslerSheet.setColumnWidth(4, 50 * 256)  // Yapılacak İşler
+        yapilacakIslerSheet.setColumnWidth(5, 20 * 256)  // Tarih
+        yapilacakIslerSheet.setColumnWidth(6, 50 * 256)  // Fotoğraf
+        
+        // Add Operators row to Yapılacak İşler sheet if operators are available
+        var yiStartDataRow = 5
+        if (operatorNames.isNotEmpty()) {
+            val yiOperatorsRow = yapilacakIslerSheet.createRow(4)
+            yiOperatorsRow.heightInPoints = 20f
+            val yiOperatorsCell = yiOperatorsRow.createCell(0)
+            yiOperatorsCell.setCellValue("Kontrol Yapan Operatörler: ${operatorNames.joinToString(", ")}")
+            yiOperatorsCell.cellStyle = dataStyle
+            yiStartDataRow = 6
+        }
+        
+        // Add header row to Yapılacak İşler sheet
+        val yiHeaderRow = yapilacakIslerSheet.createRow(yiStartDataRow)
+        yiHeaderRow.heightInPoints = 25f
+        val yiHeaders = listOf("No", "Makina İsmi", "Kontrol Başlığı", "Açıklama", "Yapılacak İşler", "Tarih", "Fotoğraf")
+        yiHeaders.forEachIndexed { index, header ->
+            val cell = yiHeaderRow.createCell(index)
+            cell.setCellValue(header)
+            cell.cellStyle = dataStyle
+        }
+        
+        // Add work order items to Yapılacak İşler sheet
+        var yiCurrentRow = yiStartDataRow + 1
+        workOrderItems.forEachIndexed { index, item ->
+            val row = yapilacakIslerSheet.createRow(yiCurrentRow)
+            row.heightInPoints = 150f
+            
+            // No
+            row.createCell(0).apply {
+                setCellValue((index + 1).toString())
+                cellStyle = dataStyle
+            }
+            
+            // Makina İsmi
+            row.createCell(1).apply {
+                setCellValue(item.machineTitle)
+                cellStyle = dataStyle
+            }
+            
+            // Kontrol Başlığı
+            row.createCell(2).apply {
+                setCellValue(item.title)
+                cellStyle = dataStyle
+            }
+            
+            // Açıklama (Notes)
+            row.createCell(3).apply {
+                setCellValue(item.notes)
+                cellStyle = dataStyle
+            }
+            
+            // Yapılacak İşler
+            row.createCell(4).apply {
+                setCellValue(item.workOrderDetails)
+                cellStyle = dataStyle
+            }
+            
+            // Tarih
+            row.createCell(5).apply {
+                setCellValue(SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(item.timestamp))
+                cellStyle = dataStyle
+            }
+            
+            // Fotoğraf - reuse existing temp files
+            if (index < tempFiles.size) {
+                excelService.embedImageInCell(
+                    workbook = workbook,
+                    sheet = yapilacakIslerSheet,
+                    imagePath = tempFiles[index].absolutePath,
+                    row = yiCurrentRow,
+                    column = 6
+                )
+            }
+            
+            yiCurrentRow++
+        }
+        
         val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val fileName = "IsEmri_$timestamp.xlsx"
         val outputFile = File(excelService.getOutputDirectory(), fileName)
