@@ -34,8 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import com.assanhanil.techassist.domain.model.ControlItemData
-import com.assanhanil.techassist.domain.model.MachineControl
+import com.assanhanil.techassist.domain.model.MachineName
 import com.assanhanil.techassist.domain.model.Operator
 import com.assanhanil.techassist.domain.model.SecurityStatus
 import com.assanhanil.techassist.presentation.ui.components.GlassCard
@@ -44,7 +43,7 @@ import com.assanhanil.techassist.presentation.ui.components.NoOperatorsSignature
 import com.assanhanil.techassist.presentation.ui.components.OperatorSignature
 import com.assanhanil.techassist.presentation.ui.components.OperatorSignatureDialog
 import com.assanhanil.techassist.presentation.ui.theme.LocalThemeColors
-import com.assanhanil.techassist.presentation.viewmodel.MachineControlViewModel
+import com.assanhanil.techassist.presentation.viewmodel.MachineNameViewModel
 import com.assanhanil.techassist.presentation.viewmodel.OperatorViewModel
 import com.assanhanil.techassist.service.ExcelService
 import kotlinx.coroutines.Dispatchers
@@ -75,18 +74,19 @@ data class ControlItem(
  * 
  * Features:
  * - Machine/Title creation and persistence (Başlık oluşturma ve kaydetme)
+ * - Machine names are templates that persist for quick selection
  * - Operator selection for controls (Operatör seçimi)
  * - Security Control section with photo capture (Güvenlik Kontrol)
  * - Security status options: Active/Inactive (Güvenlik Devrede Aktif / Devrede Değil)
- * - Save/Delete functionality for machines
- * - Merge All button to combine all machine data (Hepsini Birleştir)
+ * - Export button to send control data to Excel (Gönder)
  * - Share and Save with user-selectable destinations
  * - Excel export with images and operators embedded
+ * - Control data is cleared after export (data is already in Excel report)
  */
 @Composable
 fun GeneralControlScreen(
     excelService: ExcelService,
-    machineControlViewModel: MachineControlViewModel,
+    machineNameViewModel: MachineNameViewModel,
     operatorViewModel: OperatorViewModel,
     modifier: Modifier = Modifier
 ) {
@@ -94,8 +94,8 @@ fun GeneralControlScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     
-    // Collect saved machine controls from database
-    val savedMachineControls by machineControlViewModel.machineControls.collectAsState()
+    // Collect machine names (templates) from database
+    val machineNames by machineNameViewModel.machineNames.collectAsState()
     
     // Collect all available operators
     val allOperators by operatorViewModel.operators.collectAsState()
@@ -124,7 +124,7 @@ fun GeneralControlScreen(
     var showTitleDialog by remember { mutableStateOf(false) }
     var showMergeDialog by remember { mutableStateOf(false) }
     var showSaveLocationDialog by remember { mutableStateOf(false) }
-    var showSavedMachinesDialog by remember { mutableStateOf(false) }
+    var showMachineNamesDialog by remember { mutableStateOf(false) }
     var showOperatorSelectionDialog by remember { mutableStateOf(false) }
     
     var pendingBitmap by remember { mutableStateOf<Bitmap?>(null) }
@@ -132,13 +132,13 @@ fun GeneralControlScreen(
     var mergedFile by remember { mutableStateOf<File?>(null) }
     var mergedOperatorNames by remember { mutableStateOf<List<String>>(emptyList()) }
     
-    // Selected machines for merging
-    var selectedMachinesForMerge by remember { mutableStateOf<Set<Long>>(emptySet()) }
-    
     // Signature dialog states
     var showSignatureDialog by remember { mutableStateOf(false) }
     var showNoOperatorsDialog by remember { mutableStateOf(false) }
     var pendingExportData by remember { mutableStateOf<PendingExportData?>(null) }
+    
+    // Track if current machine should be cleared after export
+    var clearCurrentAfterExport by remember { mutableStateOf(false) }
     
     // Permission launcher
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -238,9 +238,9 @@ fun GeneralControlScreen(
                 Text("Yeni Makina")
             }
             
-            // Load Saved Machines Button
+            // Load Machine Names (templates) Button
             OutlinedButton(
-                onClick = { showSavedMachinesDialog = true },
+                onClick = { showMachineNamesDialog = true },
                 modifier = Modifier.weight(1f),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = themeColors.secondary
@@ -248,7 +248,7 @@ fun GeneralControlScreen(
             ) {
                 Icon(Icons.Default.FolderOpen, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Kayıtlı (${savedMachineControls.size})")
+                Text("Makinalar (${machineNames.size})")
             }
         }
         
@@ -513,94 +513,36 @@ fun GeneralControlScreen(
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            // Action Buttons Row
-            Row(
+            // Clear Controls Button - clears current machine's control items
+            OutlinedButton(
+                onClick = {
+                    // Just clear the control items, don't delete the machine name
+                    controlItems = emptyList()
+                    nextItemId = 1
+                    selectedOperatorIds = emptySet()
+                    Toast.makeText(context, "Kontrol öğeleri temizlendi", Toast.LENGTH_SHORT).show()
+                },
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = themeColors.error
+                ),
+                enabled = controlItems.isNotEmpty()
             ) {
-                // Save Machine Button
-                Button(
-                    onClick = {
-                        scope.launch {
-                            val controlItemsData = controlItems.map { item ->
-                                // Save bitmap to file
-                                val imageFile = saveBitmapToFile(context, item.bitmap, "control_${item.id}")
-                                ControlItemData(
-                                    id = item.id,
-                                    title = item.title,
-                                    notes = item.notes,
-                                    imagePath = imageFile.absolutePath,
-                                    timestamp = item.timestamp.time,
-                                    status = item.status,
-                                    securityStatus = item.securityStatus,
-                                    requiresWorkOrder = item.requiresWorkOrder,
-                                    workOrderDetails = item.workOrderDetails
-                                )
-                            }
-                            machineControlViewModel.saveMachineControlWithItems(
-                                title = currentMachineTitle,
-                                description = "",
-                                controlItems = controlItemsData,
-                                operatorIds = selectedOperatorIds.toList(),
-                                existingId = currentMachineId
-                            ) {
-                                Toast.makeText(context, "Makina kaydedildi: $currentMachineTitle", Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    },
-                    enabled = controlItems.isNotEmpty(),
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = themeColors.primary
-                    )
-                ) {
-                    Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Kaydet")
-                }
-                
-                // Delete Machine Button
-                OutlinedButton(
-                    onClick = {
-                        if (currentMachineId > 0) {
-                            scope.launch {
-                                machineControlViewModel.deactivateMachineControl(currentMachineId) {
-                                    Toast.makeText(context, "Makina silindi", Toast.LENGTH_SHORT).show()
-                                    currentMachineTitle = ""
-                                    currentMachineId = 0
-                                    controlItems = emptyList()
-                                    nextItemId = 1
-                                    selectedOperatorIds = emptySet()
-                                }
-                            }
-                        } else {
-                            currentMachineTitle = ""
-                            controlItems = emptyList()
-                            nextItemId = 1
-                            selectedOperatorIds = emptySet()
-                        }
-                    },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = themeColors.error
-                    )
-                ) {
-                    Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Sil")
-                }
+                Icon(Icons.Default.Clear, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Kontrolleri Temizle")
             }
         }
         
         Spacer(modifier = Modifier.height(12.dp))
         
-        // Merge All and Export Buttons (Always visible when there's data)
-        if (savedMachineControls.isNotEmpty() || controlItems.isNotEmpty()) {
+        // Merge All and Export Buttons (Always visible when there's control data)
+        if (controlItems.isNotEmpty()) {
             Divider(color = themeColors.glassBorder)
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            // Merge All Button
+            // Export Button
             Button(
                 onClick = { showMergeDialog = true },
                 modifier = Modifier.fillMaxWidth(),
@@ -608,9 +550,9 @@ fun GeneralControlScreen(
                     containerColor = themeColors.secondary
                 )
             ) {
-                Icon(Icons.Default.MergeType, contentDescription = null)
+                Icon(Icons.Default.Send, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Hepsini Birleştir")
+                Text("Gönder")
             }
         }
     }
@@ -626,46 +568,31 @@ fun GeneralControlScreen(
                 nextItemId = 1
                 selectedOperatorIds = emptySet()
                 showMachineTitleDialog = false
+                // Save machine name as template
+                machineNameViewModel.saveMachineName(title)
                 Toast.makeText(context, "Makina oluşturuldu: $title", Toast.LENGTH_SHORT).show()
             }
         )
     }
     
-    // Saved Machines Dialog
-    if (showSavedMachinesDialog) {
-        SavedMachinesDialog(
-            machines = savedMachineControls,
-            onDismiss = { showSavedMachinesDialog = false },
-            onSelect = { machine ->
-                currentMachineTitle = machine.title
-                currentMachineId = machine.id
-                // Load operators from saved machine
-                selectedOperatorIds = machine.operatorIds.toSet()
-                // Load control items from saved machine
-                controlItems = machine.controlItems.mapNotNull { data ->
-                    val bitmap = loadBitmapFromFile(data.imagePath)
-                    bitmap?.let {
-                        ControlItem(
-                            id = data.id,
-                            title = data.title,
-                            notes = data.notes,
-                            bitmap = it,
-                            timestamp = Date(data.timestamp),
-                            status = data.status,
-                            securityStatus = data.securityStatus,
-                            requiresWorkOrder = data.requiresWorkOrder,
-                            workOrderDetails = data.workOrderDetails
-                        )
-                    }
-                }
-                nextItemId = (controlItems.maxOfOrNull { it.id } ?: 0) + 1
-                showSavedMachinesDialog = false
+    // Machine Names Dialog (templates for quick selection)
+    if (showMachineNamesDialog) {
+        MachineNamesDialog(
+            machineNames = machineNames,
+            onDismiss = { showMachineNamesDialog = false },
+            onSelect = { machineName ->
+                // Only set the machine name, don't load any control data
+                currentMachineTitle = machineName.name
+                currentMachineId = 0
+                controlItems = emptyList()
+                nextItemId = 1
+                selectedOperatorIds = emptySet()
+                showMachineNamesDialog = false
+                Toast.makeText(context, "Makina seçildi: ${machineName.name}", Toast.LENGTH_SHORT).show()
             },
-            onDelete = { machine ->
-                scope.launch {
-                    machineControlViewModel.deactivateMachineControl(machine.id) {
-                        Toast.makeText(context, "Makina silindi: ${machine.title}", Toast.LENGTH_SHORT).show()
-                    }
+            onDelete = { machineName ->
+                machineNameViewModel.deleteMachineName(machineName.id) {
+                    Toast.makeText(context, "Makina silindi: ${machineName.name}", Toast.LENGTH_SHORT).show()
                 }
             }
         )
@@ -737,61 +664,29 @@ fun GeneralControlScreen(
         )
     }
     
-    // Merge Dialog
+    // Merge Dialog - simplified to export current machine controls only
     if (showMergeDialog) {
-        MergeDialog(
-            machines = savedMachineControls,
-            allOperators = allOperators,
+        ExportDialog(
             currentMachineTitle = currentMachineTitle,
             currentControlItems = controlItems,
+            allOperators = allOperators,
             currentOperatorIds = selectedOperatorIds,
-            selectedMachines = selectedMachinesForMerge,
-            onSelectionChange = { selectedMachinesForMerge = it },
             onDismiss = { showMergeDialog = false },
-            onMerge = { includeCurrentMachine ->
-                val machinesToMerge = savedMachineControls.filter { it.id in selectedMachinesForMerge }
-                val allItems = mutableListOf<Pair<String, ControlItem>>()
-                val allOperatorIds = mutableSetOf<Long>()
-                
-                // Add current machine items and operators if selected
-                if (includeCurrentMachine && controlItems.isNotEmpty()) {
-                    controlItems.forEach { item ->
-                        allItems.add(currentMachineTitle to item)
+            onExport = {
+                if (controlItems.isNotEmpty()) {
+                    val allItems = controlItems.map { item ->
+                        currentMachineTitle to item
                     }
-                    allOperatorIds.addAll(selectedOperatorIds)
-                }
-                
-                // Add saved machine items and operators
-                machinesToMerge.forEach { machine ->
-                    allOperatorIds.addAll(machine.operatorIds)
-                    machine.controlItems.forEach { data ->
-                        val bitmap = loadBitmapFromFile(data.imagePath)
-                        bitmap?.let {
-                            val item = ControlItem(
-                                id = data.id,
-                                title = data.title,
-                                notes = data.notes,
-                                bitmap = it,
-                                timestamp = Date(data.timestamp),
-                                status = data.status,
-                                securityStatus = data.securityStatus,
-                                requiresWorkOrder = data.requiresWorkOrder,
-                                workOrderDetails = data.workOrderDetails
-                            )
-                            allItems.add(machine.title to item)
-                        }
-                    }
-                }
-                
-                if (allItems.isNotEmpty()) {
-                    // Get operators for signature collection
-                    val operatorsForSignature = allOperators.filter { it.id in allOperatorIds }
+                    val operatorsForSignature = allOperators.filter { it.id in selectedOperatorIds }
                     
                     // Store pending export data
                     pendingExportData = PendingExportData(
                         items = allItems,
                         operators = operatorsForSignature
                     )
+                    
+                    // Mark that we should clear data after export
+                    clearCurrentAfterExport = true
                     
                     showMergeDialog = false
                     
@@ -802,7 +697,7 @@ fun GeneralControlScreen(
                         showNoOperatorsDialog = true
                     }
                 } else {
-                    Toast.makeText(context, "Birleştirilecek veri bulunamadı", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Gönderilecek veri bulunamadı", Toast.LENGTH_SHORT).show()
                 }
             }
         )
@@ -872,16 +767,41 @@ fun GeneralControlScreen(
     // Save/Share Location Dialog
     if (showSaveLocationDialog && mergedFile != null) {
         SaveShareDialog(
-            onDismiss = { showSaveLocationDialog = false },
+            onDismiss = { 
+                showSaveLocationDialog = false
+                // Clear data after closing dialog (export completed)
+                if (clearCurrentAfterExport) {
+                    controlItems = emptyList()
+                    nextItemId = 1
+                    selectedOperatorIds = emptySet()
+                    clearCurrentAfterExport = false
+                    Toast.makeText(context, "Kontrol verileri temizlendi", Toast.LENGTH_SHORT).show()
+                }
+            },
             onSave = {
                 val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
                 createDocumentLauncher.launch("GenelKontrol_Birlesik_$timestamp.xlsx")
+                // Clear data after save
+                if (clearCurrentAfterExport) {
+                    controlItems = emptyList()
+                    nextItemId = 1
+                    selectedOperatorIds = emptySet()
+                    clearCurrentAfterExport = false
+                }
             },
             onShare = {
                 mergedFile?.let { file ->
                     shareExcelFile(context, file)
                 }
                 showSaveLocationDialog = false
+                // Clear data after share
+                if (clearCurrentAfterExport) {
+                    controlItems = emptyList()
+                    nextItemId = 1
+                    selectedOperatorIds = emptySet()
+                    clearCurrentAfterExport = false
+                    Toast.makeText(context, "Kontrol verileri temizlendi", Toast.LENGTH_SHORT).show()
+                }
             }
         )
     }
@@ -1077,11 +997,11 @@ private fun MachineTitleDialog(
 }
 
 @Composable
-private fun SavedMachinesDialog(
-    machines: List<MachineControl>,
+private fun MachineNamesDialog(
+    machineNames: List<MachineName>,
     onDismiss: () -> Unit,
-    onSelect: (MachineControl) -> Unit,
-    onDelete: (MachineControl) -> Unit
+    onSelect: (MachineName) -> Unit,
+    onDelete: (MachineName) -> Unit
 ) {
     val themeColors = LocalThemeColors.current
     
@@ -1089,13 +1009,13 @@ private fun SavedMachinesDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Kayıtlı Makinalar",
+                text = "Makinalar",
                 color = themeColors.primary,
                 fontWeight = FontWeight.Bold
             )
         },
         text = {
-            if (machines.isEmpty()) {
+            if (machineNames.isEmpty()) {
                 Text(
                     text = "Kayıtlı makina bulunamadı",
                     color = themeColors.textSecondary
@@ -1107,32 +1027,31 @@ private fun SavedMachinesDialog(
                         .heightIn(max = 400.dp)
                         .verticalScroll(rememberScrollState())
                 ) {
-                    machines.forEach { machine ->
+                    Text(
+                        text = "Kontrol yapmak için bir makina seçin:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = themeColors.textSecondary
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    machineNames.forEach { machineName ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { onSelect(machine) }
+                                .clickable { onSelect(machineName) }
                                 .padding(vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = machine.title,
+                                    text = machineName.name,
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = themeColors.textPrimary,
                                     fontWeight = FontWeight.Medium
                                 )
-                                Text(
-                                    text = "${machine.controlItems.size} kontrol • ${
-                                        SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-                                            .format(Date(machine.updatedAt))
-                                    }",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = themeColors.textSecondary
-                                )
                             }
                             
-                            IconButton(onClick = { onDelete(machine) }) {
+                            IconButton(onClick = { onDelete(machineName) }) {
                                 Icon(
                                     imageVector = Icons.Default.Delete,
                                     contentDescription = "Sil",
@@ -1148,6 +1067,121 @@ private fun SavedMachinesDialog(
         confirmButton = {
             TextButton(onClick = onDismiss) {
                 Text("Kapat", color = themeColors.textSecondary)
+            }
+        },
+        containerColor = themeColors.surface
+    )
+}
+
+@Composable
+private fun ExportDialog(
+    currentMachineTitle: String,
+    currentControlItems: List<ControlItem>,
+    allOperators: List<Operator>,
+    currentOperatorIds: Set<Long>,
+    onDismiss: () -> Unit,
+    onExport: () -> Unit
+) {
+    val themeColors = LocalThemeColors.current
+    val selectedOperators = allOperators.filter { it.id in currentOperatorIds }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Gönderim",
+                color = themeColors.primary,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Text(
+                    text = "Aşağıdaki kontrol verilerini Excel'e aktarılacak ve ardından temizlenecek:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = themeColors.textSecondary
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Current machine info
+                GlassCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            text = currentMachineTitle,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = themeColors.textPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "${currentControlItems.size} kontrol öğesi",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = themeColors.secondary
+                        )
+                    }
+                }
+                
+                // Operators Summary Section
+                if (selectedOperators.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Text(
+                        text = "Kontrol Yapan Operatörler:",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = themeColors.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        selectedOperators.forEach { operator ->
+                            AssistChip(
+                                onClick = { },
+                                label = { Text(operator.name, style = MaterialTheme.typography.bodySmall) },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Person,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            )
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text(
+                    text = "Not: Gönderim sonrası kontrol verileri temizlenecektir. Veriler Excel raporunda saklanır.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = themeColors.textDisabled
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onExport,
+                enabled = currentControlItems.isNotEmpty(),
+                colors = ButtonDefaults.buttonColors(containerColor = themeColors.secondary)
+            ) {
+                Icon(Icons.Default.Send, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Gönder")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("İptal", color = themeColors.textSecondary)
             }
         },
         containerColor = themeColors.surface
@@ -1596,190 +1630,6 @@ private fun ControlItemDetailDialog(
 }
 
 @Composable
-private fun MergeDialog(
-    machines: List<MachineControl>,
-    allOperators: List<Operator>,
-    currentMachineTitle: String,
-    currentControlItems: List<ControlItem>,
-    currentOperatorIds: Set<Long>,
-    selectedMachines: Set<Long>,
-    onSelectionChange: (Set<Long>) -> Unit,
-    onDismiss: () -> Unit,
-    onMerge: (Boolean) -> Unit
-) {
-    val themeColors = LocalThemeColors.current
-    var includeCurrentMachine by remember { mutableStateOf(currentControlItems.isNotEmpty()) }
-    
-    // Calculate all operators involved in selected machines
-    val allSelectedOperatorIds = remember(selectedMachines, includeCurrentMachine, currentOperatorIds) {
-        val ids = mutableSetOf<Long>()
-        if (includeCurrentMachine) {
-            ids.addAll(currentOperatorIds)
-        }
-        machines.filter { it.id in selectedMachines }.forEach { machine ->
-            ids.addAll(machine.operatorIds)
-        }
-        ids
-    }
-    val selectedOperators = allOperators.filter { it.id in allSelectedOperatorIds }
-    
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = "Makinaları Birleştir",
-                color = themeColors.primary,
-                fontWeight = FontWeight.Bold
-            )
-        },
-        text = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 400.dp)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                Text(
-                    text = "Birleştirilecek makinaları seçin:",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = themeColors.textSecondary
-                )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                // Current Machine Option
-                if (currentControlItems.isNotEmpty()) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { includeCurrentMachine = !includeCurrentMachine }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = includeCurrentMachine,
-                            onCheckedChange = { includeCurrentMachine = it },
-                            colors = CheckboxDefaults.colors(
-                                checkedColor = themeColors.primary
-                            )
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Column {
-                            Text(
-                                text = currentMachineTitle,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = themeColors.textPrimary,
-                                fontWeight = FontWeight.Medium
-                            )
-                            Text(
-                                text = "${currentControlItems.size} kontrol (aktif)",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = themeColors.secondary
-                            )
-                        }
-                    }
-                    Divider(color = themeColors.glassBorder)
-                }
-                
-                // Saved Machines
-                machines.forEach { machine ->
-                    val isSelected = machine.id in selectedMachines
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                onSelectionChange(
-                                    if (isSelected) selectedMachines - machine.id
-                                    else selectedMachines + machine.id
-                                )
-                            }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = isSelected,
-                            onCheckedChange = { checked ->
-                                onSelectionChange(
-                                    if (checked) selectedMachines + machine.id
-                                    else selectedMachines - machine.id
-                                )
-                            },
-                            colors = CheckboxDefaults.colors(
-                                checkedColor = themeColors.primary
-                            )
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Column {
-                            Text(
-                                text = machine.title,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = themeColors.textPrimary,
-                                fontWeight = FontWeight.Medium
-                            )
-                            Text(
-                                text = "${machine.controlItems.size} kontrol",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = themeColors.textSecondary
-                            )
-                        }
-                    }
-                    Divider(color = themeColors.glassBorder)
-                }
-                
-                // Operators Summary Section
-                if (selectedOperators.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Text(
-                        text = "Kontrol Yapan Operatörler:",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = themeColors.primary,
-                        fontWeight = FontWeight.Bold
-                    )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        selectedOperators.forEach { operator ->
-                            AssistChip(
-                                onClick = { },
-                                label = { Text(operator.name, style = MaterialTheme.typography.bodySmall) },
-                                leadingIcon = {
-                                    Icon(
-                                        Icons.Default.Person,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = { onMerge(includeCurrentMachine) },
-                enabled = includeCurrentMachine || selectedMachines.isNotEmpty(),
-                colors = ButtonDefaults.buttonColors(containerColor = themeColors.secondary)
-            ) {
-                Icon(Icons.Default.MergeType, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Birleştir")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("İptal", color = themeColors.textSecondary)
-            }
-        },
-        containerColor = themeColors.surface
-    )
-}
-
 @Composable
 private fun SaveShareDialog(
     onDismiss: () -> Unit,

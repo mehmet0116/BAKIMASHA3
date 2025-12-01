@@ -8,12 +8,14 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.assanhanil.techassist.data.local.dao.BearingDao
 import com.assanhanil.techassist.data.local.dao.ExcelTemplateDao
 import com.assanhanil.techassist.data.local.dao.MachineControlDao
+import com.assanhanil.techassist.data.local.dao.MachineNameDao
 import com.assanhanil.techassist.data.local.dao.OperatorDao
 import com.assanhanil.techassist.data.local.dao.RecipeDao
 import com.assanhanil.techassist.data.local.dao.ReportDao
 import com.assanhanil.techassist.data.local.entity.BearingEntity
 import com.assanhanil.techassist.data.local.entity.ExcelTemplateEntity
 import com.assanhanil.techassist.data.local.entity.MachineControlEntity
+import com.assanhanil.techassist.data.local.entity.MachineNameEntity
 import com.assanhanil.techassist.data.local.entity.OperatorEntity
 import com.assanhanil.techassist.data.local.entity.RecipeEntity
 import com.assanhanil.techassist.data.local.entity.ReportEntity
@@ -31,9 +33,10 @@ import kotlinx.coroutines.launch
         RecipeEntity::class,
         ExcelTemplateEntity::class,
         MachineControlEntity::class,
+        MachineNameEntity::class,
         OperatorEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class TechAssistDatabase : RoomDatabase() {
@@ -43,6 +46,7 @@ abstract class TechAssistDatabase : RoomDatabase() {
     abstract fun recipeDao(): RecipeDao
     abstract fun excelTemplateDao(): ExcelTemplateDao
     abstract fun machineControlDao(): MachineControlDao
+    abstract fun machineNameDao(): MachineNameDao
     abstract fun operatorDao(): OperatorDao
 
     companion object {
