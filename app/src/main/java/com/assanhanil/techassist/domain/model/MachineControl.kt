@@ -26,7 +26,9 @@ data class ControlItemData(
     val imagePath: String,
     val timestamp: Long,
     val status: String,
-    val securityStatus: SecurityStatus = SecurityStatus.NOT_SET
+    val securityStatus: SecurityStatus = SecurityStatus.NOT_SET,
+    val requiresWorkOrder: Boolean = false,
+    val workOrderDetails: String = ""
 )
 
 /**

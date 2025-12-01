@@ -62,7 +62,9 @@ data class ControlItem(
     val bitmap: Bitmap,
     val timestamp: Date,
     val status: String,
-    val securityStatus: SecurityStatus = SecurityStatus.NOT_SET
+    val securityStatus: SecurityStatus = SecurityStatus.NOT_SET,
+    val requiresWorkOrder: Boolean = false,
+    val workOrderDetails: String = ""
 )
 
 /**
@@ -522,7 +524,9 @@ fun GeneralControlScreen(
                                     imagePath = imageFile.absolutePath,
                                     timestamp = item.timestamp.time,
                                     status = item.status,
-                                    securityStatus = item.securityStatus
+                                    securityStatus = item.securityStatus,
+                                    requiresWorkOrder = item.requiresWorkOrder,
+                                    workOrderDetails = item.workOrderDetails
                                 )
                             }
                             machineControlViewModel.saveMachineControlWithItems(
@@ -640,7 +644,9 @@ fun GeneralControlScreen(
                             bitmap = it,
                             timestamp = Date(data.timestamp),
                             status = data.status,
-                            securityStatus = data.securityStatus
+                            securityStatus = data.securityStatus,
+                            requiresWorkOrder = data.requiresWorkOrder,
+                            workOrderDetails = data.workOrderDetails
                         )
                     }
                 }
@@ -665,15 +671,17 @@ fun GeneralControlScreen(
                 showTitleDialog = false
                 pendingBitmap = null
             },
-            onSave = { title, notes ->
+            onSave = { title, notes, requiresWorkOrder, workOrderDetails ->
                 val newItem = ControlItem(
                     id = nextItemId,
                     title = title,
                     notes = notes,
                     bitmap = pendingBitmap!!,
                     timestamp = Date(),
-                    status = "Kontrol Edildi",
-                    securityStatus = SecurityStatus.NOT_SET
+                    status = if (requiresWorkOrder) STATUS_WORK_ORDER_REQUIRED else "Kontrol Edildi",
+                    securityStatus = SecurityStatus.NOT_SET,
+                    requiresWorkOrder = requiresWorkOrder,
+                    workOrderDetails = workOrderDetails
                 )
                 controlItems = controlItems + newItem
                 nextItemId++
@@ -692,15 +700,17 @@ fun GeneralControlScreen(
                 showSecurityControlDialog = false
                 pendingBitmap = null
             },
-            onSave = { title, notes, securityStatus ->
+            onSave = { title, notes, securityStatus, requiresWorkOrder, workOrderDetails ->
                 val newItem = ControlItem(
                     id = nextItemId,
                     title = title,
                     notes = notes,
                     bitmap = pendingBitmap!!,
                     timestamp = Date(),
-                    status = if (securityStatus == SecurityStatus.ACTIVE) "Güvenlik Aktif" else "Güvenlik Devre Dışı",
-                    securityStatus = securityStatus
+                    status = if (requiresWorkOrder) STATUS_WORK_ORDER_REQUIRED else if (securityStatus == SecurityStatus.ACTIVE) "Güvenlik Aktif" else "Güvenlik Devre Dışı",
+                    securityStatus = securityStatus,
+                    requiresWorkOrder = requiresWorkOrder,
+                    workOrderDetails = workOrderDetails
                 )
                 controlItems = controlItems + newItem
                 nextItemId++
@@ -758,7 +768,9 @@ fun GeneralControlScreen(
                                         bitmap = it,
                                         timestamp = Date(data.timestamp),
                                         status = data.status,
-                                        securityStatus = data.securityStatus
+                                        securityStatus = data.securityStatus,
+                                        requiresWorkOrder = data.requiresWorkOrder,
+                                        workOrderDetails = data.workOrderDetails
                                     )
                                     allItems.add(machine.title to item)
                                 }
@@ -881,9 +893,15 @@ private fun ControlItemCard(
                 
                 // Status badge with security indicator
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    val statusIcon = if (item.securityStatus != SecurityStatus.NOT_SET) 
-                        Icons.Default.Security else Icons.Default.CheckCircle
-                    val statusColor = when (item.securityStatus) {
+                    val statusIcon = if (item.requiresWorkOrder)
+                        Icons.Default.Build
+                    else if (item.securityStatus != SecurityStatus.NOT_SET) 
+                        Icons.Default.Security 
+                    else 
+                        Icons.Default.CheckCircle
+                    val statusColor = if (item.requiresWorkOrder)
+                        themeColors.error
+                    else when (item.securityStatus) {
                         SecurityStatus.ACTIVE -> themeColors.secondary
                         SecurityStatus.INACTIVE -> themeColors.error
                         else -> themeColors.secondary
@@ -901,6 +919,17 @@ private fun ControlItemCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = statusColor,
                         fontWeight = FontWeight.Medium
+                    )
+                }
+                
+                // Show work order details indicator if present
+                if (item.requiresWorkOrder && item.workOrderDetails.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Yapılacak İşler: ${item.workOrderDetails}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = themeColors.error.copy(alpha = 0.8f),
+                        maxLines = 1
                     )
                 }
             }
@@ -1059,11 +1088,13 @@ private fun SavedMachinesDialog(
 private fun TitleInputDialog(
     itemNumber: Int,
     onDismiss: () -> Unit,
-    onSave: (String, String) -> Unit
+    onSave: (String, String, Boolean, String) -> Unit
 ) {
     val themeColors = LocalThemeColors.current
     var title by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
+    var requiresWorkOrder by remember { mutableStateOf(false) }
+    var workOrderDetails by remember { mutableStateOf("") }
     
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1114,11 +1145,64 @@ private fun TitleInputDialog(
                         unfocusedBorderColor = themeColors.glassBorder
                     )
                 )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Work Order Checkbox
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { requiresWorkOrder = !requiresWorkOrder }
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = requiresWorkOrder,
+                        onCheckedChange = { requiresWorkOrder = it },
+                        colors = CheckboxDefaults.colors(
+                            checkedColor = themeColors.error
+                        )
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = "İş Emri Oluştur",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = if (requiresWorkOrder) themeColors.error else themeColors.textPrimary,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "Uygunsuzluk tespit edildi, iş emri gerekli",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = themeColors.textSecondary
+                        )
+                    }
+                }
+                
+                // Work Order Details (shown when checkbox is checked)
+                if (requiresWorkOrder) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    OutlinedTextField(
+                        value = workOrderDetails,
+                        onValueChange = { workOrderDetails = it },
+                        label = { Text("Yapılacak İşler") },
+                        placeholder = { Text("Gerekli işlemleri detaylı yazın...") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = false,
+                        minLines = 2,
+                        maxLines = 5,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = themeColors.error,
+                            unfocusedBorderColor = themeColors.error.copy(alpha = 0.5f)
+                        )
+                    )
+                }
             }
         },
         confirmButton = {
             Button(
-                onClick = { onSave(title.ifBlank { "Kontrol #$itemNumber" }, notes) },
+                onClick = { onSave(title.ifBlank { "Kontrol #$itemNumber" }, notes, requiresWorkOrder, workOrderDetails) },
                 colors = ButtonDefaults.buttonColors(containerColor = themeColors.primary)
             ) {
                 Icon(Icons.Default.CheckCircle, contentDescription = null)
@@ -1140,12 +1224,14 @@ private fun TitleInputDialog(
 private fun SecurityControlDialog(
     itemNumber: Int,
     onDismiss: () -> Unit,
-    onSave: (String, String, SecurityStatus) -> Unit
+    onSave: (String, String, SecurityStatus, Boolean, String) -> Unit
 ) {
     val themeColors = LocalThemeColors.current
     var title by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
     var securityStatus by remember { mutableStateOf(SecurityStatus.ACTIVE) }
+    var requiresWorkOrder by remember { mutableStateOf(false) }
+    var workOrderDetails by remember { mutableStateOf("") }
     
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1243,11 +1329,64 @@ private fun SecurityControlDialog(
                         modifier = Modifier.weight(1f)
                     )
                 }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Work Order Checkbox
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { requiresWorkOrder = !requiresWorkOrder }
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = requiresWorkOrder,
+                        onCheckedChange = { requiresWorkOrder = it },
+                        colors = CheckboxDefaults.colors(
+                            checkedColor = themeColors.error
+                        )
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = "İş Emri Oluştur",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = if (requiresWorkOrder) themeColors.error else themeColors.textPrimary,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "Uygunsuzluk tespit edildi, iş emri gerekli",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = themeColors.textSecondary
+                        )
+                    }
+                }
+                
+                // Work Order Details (shown when checkbox is checked)
+                if (requiresWorkOrder) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    OutlinedTextField(
+                        value = workOrderDetails,
+                        onValueChange = { workOrderDetails = it },
+                        label = { Text("Yapılacak İşler") },
+                        placeholder = { Text("Gerekli işlemleri detaylı yazın...") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = false,
+                        minLines = 2,
+                        maxLines = 5,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = themeColors.error,
+                            unfocusedBorderColor = themeColors.error.copy(alpha = 0.5f)
+                        )
+                    )
+                }
             }
         },
         confirmButton = {
             Button(
-                onClick = { onSave(title.ifBlank { "Güvenlik Kontrolü #$itemNumber" }, notes, securityStatus) },
+                onClick = { onSave(title.ifBlank { "Güvenlik Kontrolü #$itemNumber" }, notes, securityStatus, requiresWorkOrder, workOrderDetails) },
                 colors = ButtonDefaults.buttonColors(containerColor = themeColors.secondary)
             ) {
                 Icon(Icons.Default.Security, contentDescription = null)
@@ -1313,9 +1452,15 @@ private fun ControlItemDetailDialog(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    val statusIcon = if (item.securityStatus != SecurityStatus.NOT_SET) 
-                        Icons.Default.Security else Icons.Default.CheckCircle
-                    val statusColor = when (item.securityStatus) {
+                    val statusIcon = if (item.requiresWorkOrder)
+                        Icons.Default.Build
+                    else if (item.securityStatus != SecurityStatus.NOT_SET) 
+                        Icons.Default.Security 
+                    else 
+                        Icons.Default.CheckCircle
+                    val statusColor = if (item.requiresWorkOrder)
+                        themeColors.error
+                    else when (item.securityStatus) {
                         SecurityStatus.ACTIVE -> themeColors.secondary
                         SecurityStatus.INACTIVE -> themeColors.error
                         else -> themeColors.secondary
@@ -1348,6 +1493,22 @@ private fun ControlItemDetailDialog(
                         text = item.notes,
                         style = MaterialTheme.typography.bodyMedium,
                         color = themeColors.textPrimary
+                    )
+                }
+                
+                // Work Order Details Section
+                if (item.requiresWorkOrder) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "Yapılacak İşler:",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = themeColors.error
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = if (item.workOrderDetails.isNotEmpty()) item.workOrderDetails else "Detay girilmedi",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = themeColors.error.copy(alpha = 0.8f)
                     )
                 }
             }
@@ -1723,6 +1884,7 @@ private fun OperatorSelectionDialog(
 
 private const val FILE_PROVIDER_AUTHORITY_SUFFIX = ".fileprovider"
 private const val MAX_BITMAP_DIMENSION = 800
+private const val STATUS_WORK_ORDER_REQUIRED = "İş Emri Gerekli"
 
 private fun saveBitmapToFile(context: Context, bitmap: Bitmap, prefix: String): File {
     val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
@@ -1809,6 +1971,7 @@ private suspend fun exportMergedToExcel(
     sheet.setColumnWidth(4, 20 * 256)  // Tarih
     sheet.setColumnWidth(5, 20 * 256)  // Durum
     sheet.setColumnWidth(6, 50 * 256)  // Fotoğraf
+    sheet.setColumnWidth(7, 40 * 256)  // Yapılacak İşler
     
     val dataStyle = excelService.createDataStyle(workbook)
     
@@ -1826,7 +1989,7 @@ private suspend fun exportMergedToExcel(
     // Add header row
     val headerRow = sheet.createRow(startDataRow)
     headerRow.heightInPoints = 25f
-    val headers = listOf("No", "Makina", "Başlık", "Notlar", "Tarih", "Durum", "Fotoğraf")
+    val headers = listOf("No", "Makina", "Başlık", "Notlar", "Tarih", "Durum", "Fotoğraf", "Yapılacak İşler")
     headers.forEachIndexed { index, header ->
         val cell = headerRow.createCell(index)
         cell.setCellValue(header)
@@ -1892,6 +2055,12 @@ private suspend fun exportMergedToExcel(
                 row = currentRow,
                 column = 6
             )
+            
+            // Yapılacak İşler (Work Order Details) - Only show if work order is required
+            row.createCell(7).apply {
+                setCellValue(if (item.requiresWorkOrder) item.workOrderDetails else "")
+                cellStyle = dataStyle
+            }
             
             currentRow++
         }
