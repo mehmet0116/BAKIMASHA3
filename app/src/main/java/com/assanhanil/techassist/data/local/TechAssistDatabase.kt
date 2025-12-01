@@ -7,10 +7,12 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.assanhanil.techassist.data.local.dao.BearingDao
 import com.assanhanil.techassist.data.local.dao.ExcelTemplateDao
+import com.assanhanil.techassist.data.local.dao.MachineControlDao
 import com.assanhanil.techassist.data.local.dao.RecipeDao
 import com.assanhanil.techassist.data.local.dao.ReportDao
 import com.assanhanil.techassist.data.local.entity.BearingEntity
 import com.assanhanil.techassist.data.local.entity.ExcelTemplateEntity
+import com.assanhanil.techassist.data.local.entity.MachineControlEntity
 import com.assanhanil.techassist.data.local.entity.RecipeEntity
 import com.assanhanil.techassist.data.local.entity.ReportEntity
 import kotlinx.coroutines.Dispatchers
@@ -25,9 +27,10 @@ import kotlinx.coroutines.launch
         BearingEntity::class,
         ReportEntity::class,
         RecipeEntity::class,
-        ExcelTemplateEntity::class
+        ExcelTemplateEntity::class,
+        MachineControlEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class TechAssistDatabase : RoomDatabase() {
@@ -36,6 +39,7 @@ abstract class TechAssistDatabase : RoomDatabase() {
     abstract fun reportDao(): ReportDao
     abstract fun recipeDao(): RecipeDao
     abstract fun excelTemplateDao(): ExcelTemplateDao
+    abstract fun machineControlDao(): MachineControlDao
 
     companion object {
         @Volatile
@@ -49,6 +53,7 @@ abstract class TechAssistDatabase : RoomDatabase() {
                     "techassist_database"
                 )
                     .addCallback(DatabaseCallback())
+                    .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
                 instance

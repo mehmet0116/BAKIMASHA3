@@ -5,10 +5,12 @@ import com.assanhanil.techassist.data.local.TechAssistDatabase
 import com.assanhanil.techassist.data.preferences.ThemePreferences
 import com.assanhanil.techassist.data.repository.BearingRepositoryImpl
 import com.assanhanil.techassist.data.repository.ExcelTemplateRepositoryImpl
+import com.assanhanil.techassist.data.repository.MachineControlRepositoryImpl
 import com.assanhanil.techassist.data.repository.RecipeRepositoryImpl
 import com.assanhanil.techassist.data.repository.ReportRepositoryImpl
 import com.assanhanil.techassist.domain.repository.BearingRepository
 import com.assanhanil.techassist.domain.repository.ExcelTemplateRepository
+import com.assanhanil.techassist.domain.repository.MachineControlRepository
 import com.assanhanil.techassist.domain.repository.RecipeRepository
 import com.assanhanil.techassist.domain.repository.ReportRepository
 
@@ -38,6 +40,10 @@ class TechAssistApplication : Application() {
     
     val excelTemplateRepository: ExcelTemplateRepository by lazy {
         ExcelTemplateRepositoryImpl(database.excelTemplateDao())
+    }
+    
+    val machineControlRepository: MachineControlRepository by lazy {
+        MachineControlRepositoryImpl(database.machineControlDao())
     }
     
     // Theme Preferences

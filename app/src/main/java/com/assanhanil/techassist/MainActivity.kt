@@ -30,6 +30,7 @@ import com.assanhanil.techassist.presentation.ui.theme.LocalThemeColors
 import com.assanhanil.techassist.presentation.ui.theme.TechAssistTheme
 import com.assanhanil.techassist.presentation.viewmodel.BearingFinderViewModel
 import com.assanhanil.techassist.presentation.viewmodel.ExcelTemplateViewModel
+import com.assanhanil.techassist.presentation.viewmodel.MachineControlViewModel
 import com.assanhanil.techassist.service.ExcelService
 import kotlinx.coroutines.launch
 
@@ -56,6 +57,12 @@ class MainActivity : ComponentActivity() {
         )
     }
 
+    private val machineControlViewModel: MachineControlViewModel by viewModels {
+        MachineControlViewModel.Factory(
+            (application as TechAssistApplication).machineControlRepository
+        )
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
@@ -72,6 +79,7 @@ class MainActivity : ComponentActivity() {
                 TechAssistApp(
                     bearingFinderViewModel = bearingFinderViewModel,
                     excelTemplateViewModel = excelTemplateViewModel,
+                    machineControlViewModel = machineControlViewModel,
                     excelService = ExcelService(this),
                     themePreferences = themePreferences,
                     isDarkMode = isDarkTheme
@@ -86,6 +94,7 @@ class MainActivity : ComponentActivity() {
 fun TechAssistApp(
     bearingFinderViewModel: BearingFinderViewModel,
     excelTemplateViewModel: ExcelTemplateViewModel,
+    machineControlViewModel: MachineControlViewModel,
     excelService: ExcelService,
     themePreferences: ThemePreferences,
     isDarkMode: Boolean
@@ -201,7 +210,8 @@ fun TechAssistApp(
                     
                     composable(Screen.GeneralControl.route) {
                         GeneralControlScreen(
-                            excelService = excelService
+                            excelService = excelService,
+                            machineControlViewModel = machineControlViewModel
                         )
                     }
                 }
