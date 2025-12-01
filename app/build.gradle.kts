@@ -10,7 +10,8 @@ android {
 
     defaultConfig {
         applicationId = "com.assanhanil.techassist"
-        minSdk = 24
+        // minSdk is 26 (Android O) to support Apache POI's use of MethodHandle.invoke/invokeExact
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
