@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ASSANHANİL TECH-ASSIST</string>
-    <string name="welcome_message">ASSANHANİL BURSA</string>
+    <string name="app_name">ASSAN HANAİL BURSA BAKIM</string>
+    <string name="welcome_message">ASSAN HANAİL BURSA BAKIM</string>
     <string name="app_description">Operasyonel Raporlama Sistemi</string>
     <string name="tagline">Dijital Saha Mühendisi Platformu</string>
     
