@@ -35,6 +35,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -65,6 +66,9 @@ android {
 }
 
 dependencies {
+    // Core Library Desugaring for Java 8+ API support on older Android versions
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+
     // Core Android
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
@@ -91,8 +95,13 @@ dependencies {
     ksp("androidx.room:room-compiler:2.6.1")
 
     // Apache POI for Excel Generation
-    implementation("org.apache.poi:poi:5.2.5")
-    implementation("org.apache.poi:poi-ooxml:5.2.5")
+    // Exclude log4j-api to avoid MethodHandle.invoke issues on Android < API 26
+    implementation("org.apache.poi:poi:5.2.5") {
+        exclude(group = "org.apache.logging.log4j", module = "log4j-api")
+    }
+    implementation("org.apache.poi:poi-ooxml:5.2.5") {
+        exclude(group = "org.apache.logging.log4j", module = "log4j-api")
+    }
 
     // CameraX
     val cameraxVersion = "1.3.1"
