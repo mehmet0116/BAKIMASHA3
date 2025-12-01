@@ -302,10 +302,11 @@ fun GeneralControlScreen(
                 showTitleDialog = false
                 pendingBitmap = null
             },
-            onSave = { title ->
+            onSave = { title, notes ->
                 val newItem = ControlItem(
                     id = nextItemId,
                     title = title,
+                    notes = notes,
                     bitmap = pendingBitmap!!,
                     timestamp = Date(),
                     status = "Kontrol Edildi"
@@ -381,6 +382,28 @@ private fun ControlItemCard(
                     color = themeColors.textSecondary
                 )
                 
+                // Notes (if any)
+                if (item.notes.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Note,
+                            contentDescription = null,
+                            tint = themeColors.primary,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = item.notes,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = themeColors.textSecondary,
+                            maxLines = 1
+                        )
+                    }
+                }
+                
                 Spacer(modifier = Modifier.height(4.dp))
                 
                 // Status badge
@@ -419,10 +442,11 @@ private fun ControlItemCard(
 private fun TitleInputDialog(
     itemNumber: Int,
     onDismiss: () -> Unit,
-    onSave: (String) -> Unit
+    onSave: (String, String) -> Unit
 ) {
     val themeColors = LocalThemeColors.current
     var title by remember { mutableStateOf("") }
+    var notes by remember { mutableStateOf("") }
     
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -436,7 +460,7 @@ private fun TitleInputDialog(
         text = {
             Column {
                 Text(
-                    text = "Kontrol edilen öğe için başlık girin:",
+                    text = "Kontrol edilen öğe için başlık ve not girin:",
                     style = MaterialTheme.typography.bodyMedium,
                     color = themeColors.textSecondary
                 )
@@ -456,11 +480,28 @@ private fun TitleInputDialog(
                         unfocusedBorderColor = themeColors.glassBorder
                     )
                 )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                OutlinedTextField(
+                    value = notes,
+                    onValueChange = { notes = it },
+                    label = { Text("Notlar") },
+                    placeholder = { Text("Ek açıklamalar, bulgular...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = false,
+                    minLines = 2,
+                    maxLines = 5,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = themeColors.primary,
+                        unfocusedBorderColor = themeColors.glassBorder
+                    )
+                )
             }
         },
         confirmButton = {
             Button(
-                onClick = { onSave(title.ifBlank { "Kontrol #$itemNumber" }) },
+                onClick = { onSave(title.ifBlank { "Kontrol #$itemNumber" }, notes) },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = themeColors.primary
                 )
@@ -546,6 +587,23 @@ private fun ControlItemDetailDialog(
                         fontWeight = FontWeight.Medium
                     )
                 }
+                
+                // Notes section
+                if (item.notes.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    Text(
+                        text = "Notlar:",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = themeColors.textSecondary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = item.notes,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = themeColors.textPrimary
+                    )
+                }
             }
         },
         confirmButton = {
@@ -568,6 +626,7 @@ private fun ControlItemDetailDialog(
 data class ControlItem(
     val id: Int,
     val title: String,
+    val notes: String,
     val bitmap: Bitmap,
     val timestamp: Date,
     val status: String
@@ -589,11 +648,12 @@ private suspend fun exportToExcel(
     )
     
     // Set column widths
-    sheet.setColumnWidth(0, 15 * 256)  // No column
+    sheet.setColumnWidth(0, 10 * 256)  // No column
     sheet.setColumnWidth(1, 30 * 256)  // Title column
-    sheet.setColumnWidth(2, 20 * 256)  // Date column
-    sheet.setColumnWidth(3, 15 * 256)  // Status column
-    sheet.setColumnWidth(4, 50 * 256)  // Image column - wider for images
+    sheet.setColumnWidth(2, 35 * 256)  // Notes column
+    sheet.setColumnWidth(3, 20 * 256)  // Date column
+    sheet.setColumnWidth(4, 15 * 256)  // Status column
+    sheet.setColumnWidth(5, 50 * 256)  // Image column - wider for images
     
     // Create data style
     val dataStyle = excelService.createDataStyle(workbook)
@@ -601,7 +661,7 @@ private suspend fun exportToExcel(
     // Add header row at row 5 (after corporate header)
     val headerRow = sheet.createRow(5)
     headerRow.heightInPoints = 25f
-    val headers = listOf("No", "Başlık", "Tarih", "Durum", "Fotoğraf")
+    val headers = listOf("No", "Başlık", "Notlar", "Tarih", "Durum", "Fotoğraf")
     headers.forEachIndexed { index, header ->
         val cell = headerRow.createCell(index)
         cell.setCellValue(header)
@@ -629,15 +689,20 @@ private suspend fun exportToExcel(
             titleCell.setCellValue(item.title)
             titleCell.cellStyle = dataStyle
             
+            // Notes
+            val notesCell = row.createCell(2)
+            notesCell.setCellValue(item.notes)
+            notesCell.cellStyle = dataStyle
+            
             // Date
-            val dateCell = row.createCell(2)
+            val dateCell = row.createCell(3)
             dateCell.setCellValue(
                 SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(item.timestamp)
             )
             dateCell.cellStyle = dataStyle
             
             // Status
-            val statusCell = row.createCell(3)
+            val statusCell = row.createCell(4)
             statusCell.setCellValue(item.status)
             statusCell.cellStyle = dataStyle
             
@@ -652,7 +717,7 @@ private suspend fun exportToExcel(
                 sheet = sheet,
                 imagePath = tempImageFile.absolutePath,
                 row = currentRow,
-                column = 4
+                column = 5
             )
             
             currentRow++
