@@ -29,6 +29,7 @@ import com.assanhanil.techassist.presentation.ui.screens.*
 import com.assanhanil.techassist.presentation.ui.theme.LocalThemeColors
 import com.assanhanil.techassist.presentation.ui.theme.TechAssistTheme
 import com.assanhanil.techassist.presentation.viewmodel.BearingFinderViewModel
+import com.assanhanil.techassist.presentation.viewmodel.ExcelTemplateViewModel
 import com.assanhanil.techassist.service.ExcelService
 import kotlinx.coroutines.launch
 
@@ -49,6 +50,12 @@ class MainActivity : ComponentActivity() {
         )
     }
 
+    private val excelTemplateViewModel: ExcelTemplateViewModel by viewModels {
+        ExcelTemplateViewModel.Factory(
+            (application as TechAssistApplication).excelTemplateRepository
+        )
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
@@ -64,6 +71,7 @@ class MainActivity : ComponentActivity() {
             TechAssistTheme(darkTheme = isDarkTheme) {
                 TechAssistApp(
                     bearingFinderViewModel = bearingFinderViewModel,
+                    excelTemplateViewModel = excelTemplateViewModel,
                     excelService = ExcelService(this),
                     themePreferences = themePreferences,
                     isDarkMode = isDarkTheme
@@ -77,6 +85,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun TechAssistApp(
     bearingFinderViewModel: BearingFinderViewModel,
+    excelTemplateViewModel: ExcelTemplateViewModel,
     excelService: ExcelService,
     themePreferences: ThemePreferences,
     isDarkMode: Boolean
@@ -188,7 +197,10 @@ fun TechAssistApp(
                     }
                     
                     composable(Screen.ExcelTemplateBuilder.route) {
-                        ExcelTemplateBuilderScreen(excelService = excelService)
+                        ExcelTemplateBuilderScreen(
+                            excelService = excelService,
+                            excelTemplateViewModel = excelTemplateViewModel
+                        )
                     }
                 }
             }
