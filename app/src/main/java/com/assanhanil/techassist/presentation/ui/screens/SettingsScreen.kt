@@ -123,7 +123,7 @@ fun SettingsScreen(
                     }
                 )
                 
-                Divider(color = themeColors.glassBorder.copy(alpha = 0.3f))
+                HorizontalDivider(color = themeColors.glassBorder.copy(alpha = 0.3f))
                 
                 SettingsToggleItem(
                     icon = if (isDarkMode) Icons.Default.DarkMode else Icons.Default.LightMode,
@@ -155,7 +155,7 @@ fun SettingsScreen(
                     onCheckedChange = { autoSaveEnabled = it }
                 )
                 
-                Divider(color = themeColors.glassBorder.copy(alpha = 0.3f))
+                HorizontalDivider(color = themeColors.glassBorder.copy(alpha = 0.3f))
                 
                 SettingsToggleItem(
                     icon = Icons.Default.Notifications,
@@ -181,7 +181,7 @@ fun SettingsScreen(
                     onClick = { /* Backup functionality */ }
                 )
                 
-                Divider(color = themeColors.glassBorder.copy(alpha = 0.3f))
+                HorizontalDivider(color = themeColors.glassBorder.copy(alpha = 0.3f))
                 
                 SettingsClickableItem(
                     icon = Icons.Default.Restore,
@@ -190,7 +190,7 @@ fun SettingsScreen(
                     onClick = { /* Restore functionality */ }
                 )
                 
-                Divider(color = themeColors.glassBorder.copy(alpha = 0.3f))
+                HorizontalDivider(color = themeColors.glassBorder.copy(alpha = 0.3f))
                 
                 SettingsClickableItem(
                     icon = Icons.Default.DeleteForever,
@@ -216,7 +216,7 @@ fun SettingsScreen(
                     onClick = { showAboutDialog = true }
                 )
                 
-                Divider(color = themeColors.glassBorder.copy(alpha = 0.3f))
+                HorizontalDivider(color = themeColors.glassBorder.copy(alpha = 0.3f))
                 
                 SettingsClickableItem(
                     icon = Icons.Default.Policy,
@@ -225,7 +225,7 @@ fun SettingsScreen(
                     onClick = { /* Open privacy policy */ }
                 )
                 
-                Divider(color = themeColors.glassBorder.copy(alpha = 0.3f))
+                HorizontalDivider(color = themeColors.glassBorder.copy(alpha = 0.3f))
                 
                 SettingsClickableItem(
                     icon = Icons.Default.Help,
