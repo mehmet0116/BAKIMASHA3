@@ -35,7 +35,6 @@ import com.assanhanil.techassist.service.ExcelService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -298,6 +297,7 @@ fun GeneralControlScreen(
     // Title Input Dialog - shown after taking photo
     if (showTitleDialog && pendingBitmap != null) {
         TitleInputDialog(
+            itemNumber = nextItemId,
             onDismiss = { 
                 showTitleDialog = false
                 pendingBitmap = null
@@ -417,6 +417,7 @@ private fun ControlItemCard(
 
 @Composable
 private fun TitleInputDialog(
+    itemNumber: Int,
     onDismiss: () -> Unit,
     onSave: (String) -> Unit
 ) {
@@ -459,7 +460,7 @@ private fun TitleInputDialog(
         },
         confirmButton = {
             Button(
-                onClick = { onSave(title.ifBlank { "Kontrol #${System.currentTimeMillis() % 10000}" }) },
+                onClick = { onSave(title.ifBlank { "Kontrol #$itemNumber" }) },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = themeColors.primary
                 )
@@ -607,62 +608,69 @@ private suspend fun exportToExcel(
         cell.cellStyle = dataStyle
     }
     
-    // Add control items
-    var currentRow = 6
-    controlItems.forEachIndexed { index, item ->
-        val row = sheet.createRow(currentRow)
-        row.heightInPoints = 150f  // Set appropriate height for images
+    // Create a unique export session ID to avoid file conflicts
+    val exportSessionId = System.currentTimeMillis()
+    val tempFiles = mutableListOf<File>()
+    
+    try {
+        // Add control items
+        var currentRow = 6
+        controlItems.forEachIndexed { index, item ->
+            val row = sheet.createRow(currentRow)
+            row.heightInPoints = 150f  // Set appropriate height for images
+            
+            // No
+            val noCell = row.createCell(0)
+            noCell.setCellValue((index + 1).toString())
+            noCell.cellStyle = dataStyle
+            
+            // Title
+            val titleCell = row.createCell(1)
+            titleCell.setCellValue(item.title)
+            titleCell.cellStyle = dataStyle
+            
+            // Date
+            val dateCell = row.createCell(2)
+            dateCell.setCellValue(
+                SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(item.timestamp)
+            )
+            dateCell.cellStyle = dataStyle
+            
+            // Status
+            val statusCell = row.createCell(3)
+            statusCell.setCellValue(item.status)
+            statusCell.cellStyle = dataStyle
+            
+            // Image - save bitmap to temp file with unique name and embed in cell
+            val tempImageFile = File(context.cacheDir, "control_${exportSessionId}_${item.id}.jpg")
+            saveBitmapToFile(item.bitmap, tempImageFile)
+            tempFiles.add(tempImageFile)
+            
+            // Embed image inside the cell
+            excelService.embedImageInCell(
+                workbook = workbook,
+                sheet = sheet,
+                imagePath = tempImageFile.absolutePath,
+                row = currentRow,
+                column = 4
+            )
+            
+            currentRow++
+        }
         
-        // No
-        val noCell = row.createCell(0)
-        noCell.setCellValue((index + 1).toString())
-        noCell.cellStyle = dataStyle
+        // Save file
+        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val fileName = "GenelKontrol_$timestamp.xlsx"
+        val outputFile = File(excelService.getOutputDirectory(), fileName)
         
-        // Title
-        val titleCell = row.createCell(1)
-        titleCell.setCellValue(item.title)
-        titleCell.cellStyle = dataStyle
+        excelService.saveWorkbook(workbook, outputFile.absolutePath)
+        workbook.close()
         
-        // Date
-        val dateCell = row.createCell(2)
-        dateCell.setCellValue(
-            SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(item.timestamp)
-        )
-        dateCell.cellStyle = dataStyle
-        
-        // Status
-        val statusCell = row.createCell(3)
-        statusCell.setCellValue(item.status)
-        statusCell.cellStyle = dataStyle
-        
-        // Image - save bitmap to temp file and embed in cell
-        val tempImageFile = File(context.cacheDir, "control_image_${item.id}.jpg")
-        saveBitmapToFile(item.bitmap, tempImageFile)
-        
-        // Embed image inside the cell
-        excelService.embedImageInCell(
-            workbook = workbook,
-            sheet = sheet,
-            imagePath = tempImageFile.absolutePath,
-            row = currentRow,
-            column = 4
-        )
-        
-        // Clean up temp file
-        tempImageFile.delete()
-        
-        currentRow++
+        outputFile
+    } finally {
+        // Clean up all temp files
+        tempFiles.forEach { it.delete() }
     }
-    
-    // Save file
-    val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-    val fileName = "GenelKontrol_$timestamp.xlsx"
-    val outputFile = File(excelService.getOutputDirectory(), fileName)
-    
-    excelService.saveWorkbook(workbook, outputFile.absolutePath)
-    workbook.close()
-    
-    outputFile
 }
 
 /**
