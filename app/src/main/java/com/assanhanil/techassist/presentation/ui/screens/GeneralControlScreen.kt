@@ -1433,6 +1433,9 @@ private fun SaveShareDialog(
 
 // ===== Helper Functions =====
 
+private const val FILE_PROVIDER_AUTHORITY_SUFFIX = ".fileprovider"
+private const val MAX_BITMAP_DIMENSION = 800
+
 private fun saveBitmapToFile(context: Context, bitmap: Bitmap, prefix: String): File {
     val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
     val file = File(context.filesDir, "${prefix}_$timestamp.jpg")
@@ -1446,18 +1449,42 @@ private fun loadBitmapFromFile(path: String): Bitmap? {
     return try {
         val file = File(path)
         if (file.exists()) {
-            BitmapFactory.decodeFile(path)
+            // Use inSampleSize to reduce memory usage for large images
+            val options = BitmapFactory.Options().apply {
+                inJustDecodeBounds = true
+            }
+            BitmapFactory.decodeFile(path, options)
+            
+            // Calculate inSampleSize
+            options.inSampleSize = calculateInSampleSize(options, MAX_BITMAP_DIMENSION, MAX_BITMAP_DIMENSION)
+            options.inJustDecodeBounds = false
+            
+            BitmapFactory.decodeFile(path, options)
         } else null
     } catch (e: Exception) {
         null
     }
 }
 
+private fun calculateInSampleSize(options: BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
+    val (height, width) = options.outHeight to options.outWidth
+    var inSampleSize = 1
+
+    if (height > reqHeight || width > reqWidth) {
+        val halfHeight = height / 2
+        val halfWidth = width / 2
+        while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+            inSampleSize *= 2
+        }
+    }
+    return inSampleSize
+}
+
 private fun shareExcelFile(context: Context, file: File) {
     try {
         val uri = FileProvider.getUriForFile(
             context,
-            "${context.packageName}.fileprovider",
+            context.packageName + FILE_PROVIDER_AUTHORITY_SUFFIX,
             file
         )
         

@@ -19,6 +19,10 @@ class MachineControlRepositoryImpl(
     private val machineControlDao: MachineControlDao
 ) : MachineControlRepository {
 
+    companion object {
+        private const val EMPTY_JSON_ARRAY = "[]"
+    }
+
     override fun getAllMachineControls(): Flow<List<MachineControl>> {
         return machineControlDao.getAllMachineControls().map { entities ->
             entities.map { it.toDomain() }
@@ -80,7 +84,7 @@ class MachineControlRepositoryImpl(
      * Parse JSON string to list of ControlItemData.
      */
     private fun parseControlItemsJson(json: String): List<ControlItemData> {
-        if (json.isBlank() || json == "[]") return emptyList()
+        if (json.isBlank() || json == EMPTY_JSON_ARRAY) return emptyList()
         
         return try {
             val jsonArray = JSONArray(json)
@@ -131,7 +135,7 @@ class MachineControlRepositoryImpl(
     private fun parseSecurityStatus(status: String): SecurityStatus {
         return try {
             SecurityStatus.valueOf(status)
-        } catch (e: Exception) {
+        } catch (e: IllegalArgumentException) {
             SecurityStatus.NOT_SET
         }
     }
