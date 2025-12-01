@@ -29,6 +29,7 @@ import com.assanhanil.techassist.domain.model.*
 import com.assanhanil.techassist.presentation.ui.components.GlassCard
 import com.assanhanil.techassist.presentation.ui.components.NeonCard
 import com.assanhanil.techassist.presentation.ui.theme.LocalThemeColors
+import com.assanhanil.techassist.presentation.viewmodel.ExcelTemplateViewModel
 import com.assanhanil.techassist.service.ExcelService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -54,6 +55,7 @@ import java.util.*
 @Composable
 fun ExcelTemplateBuilderScreen(
     excelService: ExcelService,
+    excelTemplateViewModel: ExcelTemplateViewModel,
     modifier: Modifier = Modifier
 ) {
     val themeColors = LocalThemeColors.current
@@ -96,8 +98,31 @@ fun ExcelTemplateBuilderScreen(
     var showEditColumnDialog by remember { mutableStateOf<TemplateColumn?>(null) }
     var showSaveDialog by remember { mutableStateOf(false) }
     var isGenerating by remember { mutableStateOf(false) }
+    var templateDescription by remember { mutableStateOf("") }
     var selectedCellPosition by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     var editingCellValue by remember { mutableStateOf("") }
+    
+    // Observe ViewModel states
+    val isSaving by excelTemplateViewModel.isLoading.collectAsState()
+    val saveSuccess by excelTemplateViewModel.saveSuccess.collectAsState()
+    val saveError by excelTemplateViewModel.error.collectAsState()
+    
+    // Handle save success
+    LaunchedEffect(saveSuccess, excelTemplateViewModel) {
+        if (saveSuccess) {
+            Toast.makeText(context, "Şablon başarıyla kaydedildi", Toast.LENGTH_SHORT).show()
+            excelTemplateViewModel.resetSaveSuccess()
+            showSaveDialog = false
+        }
+    }
+    
+    // Handle save error
+    LaunchedEffect(saveError, excelTemplateViewModel) {
+        saveError?.let { error ->
+            Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+            excelTemplateViewModel.clearError()
+        }
+    }
     
     Column(
         modifier = modifier
@@ -650,7 +675,11 @@ fun ExcelTemplateBuilderScreen(
     // Save Template Dialog
     if (showSaveDialog) {
         AlertDialog(
-            onDismissRequest = { showSaveDialog = false },
+            onDismissRequest = { 
+                if (!isSaving) {
+                    showSaveDialog = false 
+                }
+            },
             title = {
                 Text(
                     text = "Şablonu Kaydet",
@@ -658,27 +687,59 @@ fun ExcelTemplateBuilderScreen(
                 )
             },
             text = {
-                Text(
-                    text = "\"$templateName\" şablonu kaydedilecek. Bu şablonu daha sonra tekrar kullanabilirsiniz.",
-                    color = themeColors.textSecondary
-                )
+                Column {
+                    Text(
+                        text = "\"$templateName\" şablonu kaydedilecek. Bu şablonu daha sonra tekrar kullanabilirsiniz.",
+                        color = themeColors.textSecondary
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    OutlinedTextField(
+                        value = templateDescription,
+                        onValueChange = { templateDescription = it },
+                        label = { Text("Açıklama (isteğe bağlı)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = false,
+                        maxLines = 3,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = themeColors.primary,
+                            unfocusedBorderColor = themeColors.glassBorder
+                        )
+                    )
+                }
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        // TODO: Implement database save when Room DAO is added
-                        Toast.makeText(context, "Şablon kaydetme özelliği yakında eklenecek", Toast.LENGTH_SHORT).show()
-                        showSaveDialog = false
+                        excelTemplateViewModel.saveTemplateFromBuilder(
+                            name = templateName,
+                            description = templateDescription,
+                            columns = columns,
+                            rows = rows
+                        )
                     },
+                    enabled = !isSaving && templateName.isNotBlank(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = themeColors.secondary
                     )
                 ) {
-                    Text("Kaydet")
+                    if (isSaving) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            color = themeColors.background,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+                    Text(if (isSaving) "Kaydediliyor..." else "Kaydet")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showSaveDialog = false }) {
+                TextButton(
+                    onClick = { showSaveDialog = false },
+                    enabled = !isSaving
+                ) {
                     Text("İptal", color = themeColors.textSecondary)
                 }
             },
