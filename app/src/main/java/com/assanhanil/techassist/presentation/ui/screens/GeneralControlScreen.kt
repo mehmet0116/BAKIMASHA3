@@ -2002,9 +2002,9 @@ private suspend fun exportMergedToExcel(
     val workOrderTempFiles = mutableMapOf<Int, File>()
     
     try {
-        // Filter out items that require work orders from the main "Birleşik Kontrol" sheet
+        // Partition items into control items (for main sheet) and work order items (for Yapılacak İşler sheet)
         // Work order items will only appear in the "Yapılacak İşler" sheet
-        val controlItems = allItems.filter { (_, item) -> !item.requiresWorkOrder }
+        val (controlItems, workOrderItems) = allItems.partition { (_, item) -> !item.requiresWorkOrder }
         
         var currentRow = startDataRow + 1
         controlItems.forEachIndexed { index, (machineTitle, item) ->
@@ -2065,8 +2065,7 @@ private suspend fun exportMergedToExcel(
             currentRow++
         }
         
-        // Create "Yapılacak İşler" sheet for work order items
-        val workOrderItems = allItems.filter { (_, item) -> item.requiresWorkOrder }
+        // Create "Yapılacak İşler" sheet for work order items (from partition above)
         if (workOrderItems.isNotEmpty()) {
             val workOrderSheet = excelService.createSheetWithHeader(
                 workbook = workbook,
