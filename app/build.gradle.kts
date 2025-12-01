@@ -96,13 +96,9 @@ dependencies {
     ksp("androidx.room:room-compiler:2.6.1")
 
     // Apache POI for Excel Generation
-    // Exclude log4j-api to avoid MethodHandle.invoke issues on Android < API 26
-    implementation("org.apache.poi:poi:5.2.5") {
-        exclude(group = "org.apache.logging.log4j", module = "log4j-api")
-    }
-    implementation("org.apache.poi:poi-ooxml:5.2.5") {
-        exclude(group = "org.apache.logging.log4j", module = "log4j-api")
-    }
+    // Note: minSdk 26 supports MethodHandle.invoke, so log4j-api is included
+    implementation("org.apache.poi:poi:5.2.5")
+    implementation("org.apache.poi:poi-ooxml:5.2.5")
 
     // CameraX
     val cameraxVersion = "1.3.1"
