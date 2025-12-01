@@ -1,5 +1,6 @@
 package com.assanhanil.techassist.data.repository
 
+import android.util.Log
 import com.assanhanil.techassist.data.local.dao.MachineControlDao
 import com.assanhanil.techassist.data.local.entity.MachineControlEntity
 import com.assanhanil.techassist.domain.model.ControlItemData
@@ -9,6 +10,7 @@ import com.assanhanil.techassist.domain.repository.MachineControlRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 
 /**
@@ -20,6 +22,7 @@ class MachineControlRepositoryImpl(
 ) : MachineControlRepository {
 
     companion object {
+        private const val TAG = "MachineControlRepo"
         private const val EMPTY_JSON_ARRAY = "[]"
     }
 
@@ -149,7 +152,8 @@ class MachineControlRepositoryImpl(
             }
             
             ids
-        } catch (e: Exception) {
+        } catch (e: JSONException) {
+            Log.e(TAG, "Error parsing operator IDs JSON: $json", e)
             emptyList()
         }
     }
