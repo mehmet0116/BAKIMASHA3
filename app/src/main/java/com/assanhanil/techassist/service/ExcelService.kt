@@ -398,6 +398,187 @@ class ExcelService(private val context: Context) {
     }
 
     /**
+     * Embeds multiple operator signatures in a footer section.
+     * Creates a signature area with operator name label and signature image.
+     * 
+     * @param workbook The workbook
+     * @param sheet The sheet to add signatures to
+     * @param signatures List of pairs containing operator name and signature image path
+     * @param startRow Row index where signatures section should start
+     * @return The row index after all signatures are added
+     */
+    fun embedOperatorSignatures(
+        workbook: XSSFWorkbook,
+        sheet: XSSFSheet,
+        signatures: List<Pair<String, String>>, // Pair<OperatorName, SignaturePath>
+        startRow: Int
+    ): Int {
+        if (signatures.isEmpty()) return startRow
+        
+        var currentRow = startRow
+        
+        // Create signature section header style
+        val headerStyle = workbook.createCellStyle()
+        val headerFont = workbook.createFont()
+        headerFont.bold = true
+        headerFont.fontHeightInPoints = 12
+        headerStyle.setFont(headerFont)
+        headerStyle.alignment = HorizontalAlignment.LEFT
+        headerStyle.verticalAlignment = VerticalAlignment.CENTER
+        
+        // Create operator name label style
+        val labelStyle = workbook.createCellStyle()
+        val labelFont = workbook.createFont()
+        labelFont.bold = true
+        labelFont.fontHeightInPoints = 10
+        labelStyle.setFont(labelFont)
+        labelStyle.alignment = HorizontalAlignment.CENTER
+        labelStyle.verticalAlignment = VerticalAlignment.BOTTOM
+        
+        // Add section header
+        val sectionHeaderRow = sheet.createRow(currentRow)
+        sectionHeaderRow.heightInPoints = 25f
+        val sectionHeaderCell = sectionHeaderRow.createCell(0)
+        sectionHeaderCell.setCellValue("Operatör İmzaları")
+        sectionHeaderCell.cellStyle = headerStyle
+        
+        // Calculate layout - max 3 signatures per row
+        val maxSignaturesPerRow = 3
+        val signatureColumnWidth = 2 // Each signature spans 2 columns
+        
+        // Merge header across all signature columns
+        val endCol = min(signatures.size * signatureColumnWidth - 1, maxSignaturesPerRow * signatureColumnWidth - 1)
+        if (endCol > 0) {
+            sheet.addMergedRegion(CellRangeAddress(currentRow, currentRow, 0, endCol))
+        }
+        
+        currentRow++
+        
+        // Set column widths for signature columns
+        for (i in 0 until maxSignaturesPerRow * signatureColumnWidth) {
+            sheet.setColumnWidth(i, 20 * COLUMN_WIDTH_UNIT)
+        }
+        
+        var sigIndex = 0
+        while (sigIndex < signatures.size) {
+            // Add operator name row
+            val nameRow = sheet.createRow(currentRow)
+            nameRow.heightInPoints = 20f
+            
+            for (col in 0 until maxSignaturesPerRow) {
+                if (sigIndex + col < signatures.size) {
+                    val (operatorName, _) = signatures[sigIndex + col]
+                    val nameCell = nameRow.createCell(col * signatureColumnWidth)
+                    nameCell.setCellValue(operatorName)
+                    nameCell.cellStyle = labelStyle
+                    
+                    // Merge name cell across signature width
+                    if (signatureColumnWidth > 1) {
+                        sheet.addMergedRegion(CellRangeAddress(
+                            currentRow, currentRow,
+                            col * signatureColumnWidth, col * signatureColumnWidth + signatureColumnWidth - 1
+                        ))
+                    }
+                }
+            }
+            currentRow++
+            
+            // Add signature row (taller for images)
+            val signatureRow = sheet.createRow(currentRow)
+            signatureRow.heightInPoints = 100f // Tall row for signature images
+            
+            for (col in 0 until maxSignaturesPerRow) {
+                if (sigIndex + col < signatures.size) {
+                    val (_, signaturePath) = signatures[sigIndex + col]
+                    
+                    // Merge cells for signature area
+                    if (signatureColumnWidth > 1) {
+                        sheet.addMergedRegion(CellRangeAddress(
+                            currentRow, currentRow,
+                            col * signatureColumnWidth, col * signatureColumnWidth + signatureColumnWidth - 1
+                        ))
+                    }
+                    
+                    // Embed signature image
+                    if (signaturePath.isNotEmpty()) {
+                        embedImageInCell(
+                            workbook = workbook,
+                            sheet = sheet,
+                            imagePath = signaturePath,
+                            row = currentRow,
+                            column = col * signatureColumnWidth
+                        )
+                    }
+                }
+            }
+            currentRow++
+            
+            // Add signature line row
+            val lineRow = sheet.createRow(currentRow)
+            lineRow.heightInPoints = 15f
+            
+            for (col in 0 until maxSignaturesPerRow) {
+                if (sigIndex + col < signatures.size) {
+                    val lineCell = lineRow.createCell(col * signatureColumnWidth)
+                    lineCell.setCellValue("_______________________")
+                    
+                    val lineStyle = workbook.createCellStyle()
+                    lineStyle.alignment = HorizontalAlignment.CENTER
+                    lineStyle.verticalAlignment = VerticalAlignment.TOP
+                    lineCell.cellStyle = lineStyle
+                    
+                    // Merge line cell across signature width
+                    if (signatureColumnWidth > 1) {
+                        sheet.addMergedRegion(CellRangeAddress(
+                            currentRow, currentRow,
+                            col * signatureColumnWidth, col * signatureColumnWidth + signatureColumnWidth - 1
+                        ))
+                    }
+                }
+            }
+            currentRow++
+            
+            // Add "İmza" label row
+            val imzaLabelRow = sheet.createRow(currentRow)
+            imzaLabelRow.heightInPoints = 15f
+            
+            for (col in 0 until maxSignaturesPerRow) {
+                if (sigIndex + col < signatures.size) {
+                    val imzaCell = imzaLabelRow.createCell(col * signatureColumnWidth)
+                    imzaCell.setCellValue("İmza")
+                    
+                    val imzaStyle = workbook.createCellStyle()
+                    val imzaFont = workbook.createFont()
+                    imzaFont.fontHeightInPoints = 9
+                    imzaStyle.setFont(imzaFont)
+                    imzaStyle.alignment = HorizontalAlignment.CENTER
+                    imzaStyle.verticalAlignment = VerticalAlignment.TOP
+                    imzaCell.cellStyle = imzaStyle
+                    
+                    // Merge label cell across signature width
+                    if (signatureColumnWidth > 1) {
+                        sheet.addMergedRegion(CellRangeAddress(
+                            currentRow, currentRow,
+                            col * signatureColumnWidth, col * signatureColumnWidth + signatureColumnWidth - 1
+                        ))
+                    }
+                }
+            }
+            currentRow++
+            
+            // Move to next set of signatures
+            sigIndex += maxSignaturesPerRow
+            
+            // Add spacing between signature rows
+            if (sigIndex < signatures.size) {
+                currentRow++
+            }
+        }
+        
+        return currentRow
+    }
+
+    /**
      * Saves the workbook to a file.
      */
     fun saveWorkbook(workbook: XSSFWorkbook, filePath: String): Boolean {
