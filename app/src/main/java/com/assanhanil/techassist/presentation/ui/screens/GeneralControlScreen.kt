@@ -1998,9 +1998,16 @@ private suspend fun exportMergedToExcel(
     val exportSessionId = System.currentTimeMillis()
     val tempFiles = mutableListOf<File>()
     
+    // Store temp files for work order items separately (for Yapılacak İşler sheet)
+    val workOrderTempFiles = mutableMapOf<Int, File>()
+    
     try {
+        // Partition items into control items (for main sheet) and work order items (for Yapılacak İşler sheet)
+        // Work order items will only appear in the "Yapılacak İşler" sheet
+        val (controlItems, workOrderItems) = allItems.partition { (_, item) -> !item.requiresWorkOrder }
+        
         var currentRow = startDataRow + 1
-        allItems.forEachIndexed { index, (machineTitle, item) ->
+        controlItems.forEachIndexed { index, (machineTitle, item) ->
             val row = sheet.createRow(currentRow)
             row.heightInPoints = 150f
             
@@ -2058,10 +2065,7 @@ private suspend fun exportMergedToExcel(
             currentRow++
         }
         
-        // Create "Yapılacak İşler" sheet for work order items
-        // Build index map for efficient lookup
-        val itemIndexMap = allItems.mapIndexed { index, pair -> pair to index }.toMap()
-        val workOrderItems = allItems.filter { (_, item) -> item.requiresWorkOrder }
+        // Create "Yapılacak İşler" sheet for work order items (from partition above)
         if (workOrderItems.isNotEmpty()) {
             val workOrderSheet = excelService.createSheetWithHeader(
                 workbook = workbook,
@@ -2131,17 +2135,20 @@ private suspend fun exportMergedToExcel(
                     cellStyle = dataStyle
                 }
                 
-                // Fotoğraf - reuse temp file from main sheet export using index map
-                val originalIndex = itemIndexMap[pair]
-                if (originalIndex != null && originalIndex < tempFiles.size) {
-                    excelService.embedImageInCell(
-                        workbook = workbook,
-                        sheet = workOrderSheet,
-                        imagePath = tempFiles[originalIndex].absolutePath,
-                        row = woCurrentRow,
-                        column = 6
-                    )
+                // Fotoğraf - create temp file for work order item
+                val woTempImageFile = File(context.cacheDir, "workorder_${exportSessionId}_${index}.jpg")
+                FileOutputStream(woTempImageFile).use { outputStream ->
+                    item.bitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
                 }
+                workOrderTempFiles[index] = woTempImageFile
+                
+                excelService.embedImageInCell(
+                    workbook = workbook,
+                    sheet = workOrderSheet,
+                    imagePath = woTempImageFile.absolutePath,
+                    row = woCurrentRow,
+                    column = 6
+                )
                 
                 woCurrentRow++
             }
@@ -2157,5 +2164,6 @@ private suspend fun exportMergedToExcel(
         outputFile
     } finally {
         tempFiles.forEach { it.delete() }
+        workOrderTempFiles.values.forEach { it.delete() }
     }
 }
