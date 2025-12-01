@@ -181,10 +181,6 @@ fun TechAssistApp(
                         ReportsScreen(excelService = excelService)
                     }
                     
-                    composable(Screen.Recipes.route) {
-                        RecipesScreen()
-                    }
-                    
                     composable(Screen.Camera.route) {
                         CameraScreen()
                     }
@@ -344,7 +340,6 @@ private fun getScreenFromRoute(route: String?): Screen? {
         Screen.ElectricalWizard.route -> Screen.ElectricalWizard
         Screen.Reports.route -> Screen.Reports
         Screen.ExcelTemplateBuilder.route -> Screen.ExcelTemplateBuilder
-        Screen.Recipes.route -> Screen.Recipes
         Screen.Camera.route -> Screen.Camera
         Screen.Settings.route -> Screen.Settings
         else -> null
