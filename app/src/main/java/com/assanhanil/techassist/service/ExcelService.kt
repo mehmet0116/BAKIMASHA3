@@ -442,20 +442,20 @@ class ExcelService(private val context: Context) {
         sectionHeaderCell.setCellValue("Operatör İmzaları")
         sectionHeaderCell.cellStyle = headerStyle
         
+        // Calculate layout - max 3 signatures per row
+        val maxSignaturesPerRow = 3
+        val signatureColumnWidth = 2 // Each signature spans 2 columns
+        
         // Merge header across all signature columns
-        val endCol = min(signatures.size * 2 - 1, 5) // Max 3 signatures per row
+        val endCol = min(signatures.size * signatureColumnWidth - 1, maxSignaturesPerRow * signatureColumnWidth - 1)
         if (endCol > 0) {
             sheet.addMergedRegion(CellRangeAddress(currentRow, currentRow, 0, endCol))
         }
         
         currentRow++
         
-        // Calculate layout - max 3 signatures per row
-        val signaturesPerRow = 3
-        val signatureColumnWidth = 2 // Each signature spans 2 columns
-        
         // Set column widths for signature columns
-        for (i in 0 until signaturesPerRow * signatureColumnWidth) {
+        for (i in 0 until maxSignaturesPerRow * signatureColumnWidth) {
             sheet.setColumnWidth(i, 20 * COLUMN_WIDTH_UNIT)
         }
         
@@ -465,7 +465,7 @@ class ExcelService(private val context: Context) {
             val nameRow = sheet.createRow(currentRow)
             nameRow.heightInPoints = 20f
             
-            for (col in 0 until signaturesPerRow) {
+            for (col in 0 until maxSignaturesPerRow) {
                 if (sigIndex + col < signatures.size) {
                     val (operatorName, _) = signatures[sigIndex + col]
                     val nameCell = nameRow.createCell(col * signatureColumnWidth)
@@ -487,7 +487,7 @@ class ExcelService(private val context: Context) {
             val signatureRow = sheet.createRow(currentRow)
             signatureRow.heightInPoints = 100f // Tall row for signature images
             
-            for (col in 0 until signaturesPerRow) {
+            for (col in 0 until maxSignaturesPerRow) {
                 if (sigIndex + col < signatures.size) {
                     val (_, signaturePath) = signatures[sigIndex + col]
                     
@@ -517,7 +517,7 @@ class ExcelService(private val context: Context) {
             val lineRow = sheet.createRow(currentRow)
             lineRow.heightInPoints = 15f
             
-            for (col in 0 until signaturesPerRow) {
+            for (col in 0 until maxSignaturesPerRow) {
                 if (sigIndex + col < signatures.size) {
                     val lineCell = lineRow.createCell(col * signatureColumnWidth)
                     lineCell.setCellValue("_______________________")
@@ -542,7 +542,7 @@ class ExcelService(private val context: Context) {
             val imzaLabelRow = sheet.createRow(currentRow)
             imzaLabelRow.heightInPoints = 15f
             
-            for (col in 0 until signaturesPerRow) {
+            for (col in 0 until maxSignaturesPerRow) {
                 if (sigIndex + col < signatures.size) {
                     val imzaCell = imzaLabelRow.createCell(col * signatureColumnWidth)
                     imzaCell.setCellValue("İmza")
@@ -567,7 +567,7 @@ class ExcelService(private val context: Context) {
             currentRow++
             
             // Move to next set of signatures
-            sigIndex += signaturesPerRow
+            sigIndex += maxSignaturesPerRow
             
             // Add spacing between signature rows
             if (sigIndex < signatures.size) {

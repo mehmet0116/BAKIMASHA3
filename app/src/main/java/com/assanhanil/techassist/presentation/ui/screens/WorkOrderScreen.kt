@@ -1129,7 +1129,7 @@ private suspend fun exportWorkOrdersToExcelWithSignatures(
             
             // Fotoğraf
             item.bitmap?.let { bitmap ->
-                val tempImageFile = File(context.cacheDir, "techassist_workorder_sig_${exportSessionId}_${index}.jpg")
+                val tempImageFile = File(context.cacheDir, "wo_image_${exportSessionId}_${index}.jpg")
                 FileOutputStream(tempImageFile).use { outputStream ->
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
                 }
