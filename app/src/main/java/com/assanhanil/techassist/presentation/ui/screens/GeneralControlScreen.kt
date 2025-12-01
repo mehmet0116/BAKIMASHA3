@@ -23,7 +23,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -486,7 +485,7 @@ fun GeneralControlScreen(
         
         // Merge All and Export Buttons (Always visible when there's data)
         if (savedMachineControls.isNotEmpty() || controlItems.isNotEmpty()) {
-            HorizontalDivider(color = themeColors.glassBorder)
+            Divider(color = themeColors.glassBorder)
             
             Spacer(modifier = Modifier.height(12.dp))
             
@@ -919,7 +918,7 @@ private fun SavedMachinesDialog(
                                 )
                             }
                         }
-                        HorizontalDivider(color = themeColors.glassBorder)
+                        Divider(color = themeColors.glassBorder)
                     }
                 }
             }
@@ -1309,7 +1308,7 @@ private fun MergeDialog(
                             )
                         }
                     }
-                    HorizontalDivider(color = themeColors.glassBorder)
+                    Divider(color = themeColors.glassBorder)
                 }
                 
                 // Saved Machines
@@ -1354,7 +1353,7 @@ private fun MergeDialog(
                             )
                         }
                     }
-                    HorizontalDivider(color = themeColors.glassBorder)
+                    Divider(color = themeColors.glassBorder)
                 }
             }
         },
