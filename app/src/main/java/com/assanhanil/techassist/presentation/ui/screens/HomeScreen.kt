@@ -29,7 +29,6 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     data object ElectricalWizard : Screen("electrical_wizard", "Elektrik Sihirbazı", Icons.Default.Bolt)
     data object Reports : Screen("reports", "Raporlar", Icons.Default.Description)
     data object ExcelTemplateBuilder : Screen("excel_template_builder", "Excel Şablon Oluşturucu", Icons.Default.TableChart)
-    data object Recipes : Screen("recipes", "Tarifler", Icons.Default.Book)
     data object Camera : Screen("camera", "Kamera", Icons.Default.CameraAlt)
     data object Settings : Screen("settings", "Ayarlar", Icons.Default.Settings)
 }
@@ -49,7 +48,6 @@ fun HomeScreen(
         Screen.ElectricalWizard,
         Screen.Reports,
         Screen.ExcelTemplateBuilder,
-        Screen.Recipes,
         Screen.Camera,
         Screen.Settings
     )
