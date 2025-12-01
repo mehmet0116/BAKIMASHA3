@@ -125,7 +125,7 @@ fun TechAssistApp(
                     TopAppBar(
                         title = {
                             Text(
-                                text = currentScreen?.title ?: "ASSANHANİL TECH-ASSIST",
+                                text = currentScreen?.title ?: "ASSAN HANAİL BURSA BAKIM",
                                 color = themeColors.textPrimary
                             )
                         },
@@ -232,13 +232,13 @@ fun DrawerContent(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "ASSANHANİL",
+                    text = "ASSAN HANAİL",
                     style = MaterialTheme.typography.headlineSmall,
                     color = themeColors.primary,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "TECH-ASSIST",
+                    text = "BURSA BAKIM",
                     style = MaterialTheme.typography.titleMedium,
                     color = themeColors.textSecondary
                 )

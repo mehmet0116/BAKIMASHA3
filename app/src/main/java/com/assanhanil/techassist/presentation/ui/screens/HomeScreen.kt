@@ -60,14 +60,14 @@ fun HomeScreen(
     ) {
         // Header
         Text(
-            text = "ASSANHANİL",
+            text = "ASSAN HANAİL",
             style = MaterialTheme.typography.headlineMedium,
             color = themeColors.primary,
             fontWeight = FontWeight.Bold
         )
         
         Text(
-            text = "TECH-ASSIST",
+            text = "BURSA BAKIM",
             style = MaterialTheme.typography.titleMedium,
             color = themeColors.textSecondary
         )

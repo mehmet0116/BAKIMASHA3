@@ -108,7 +108,7 @@ fun SplashScreen(
             ) {
                 // Glow layer (behind)
                 Text(
-                    text = "ASSANHANİL",
+                    text = "ASSAN HANAİL",
                     style = MaterialTheme.typography.displaySmall.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = 42.sp,
@@ -121,7 +121,7 @@ fun SplashScreen(
                 
                 // Main text
                 Text(
-                    text = "ASSANHANİL",
+                    text = "ASSAN HANAİL",
                     style = MaterialTheme.typography.displaySmall.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = 42.sp,
@@ -134,9 +134,9 @@ fun SplashScreen(
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            // BURSA subtitle
+            // BURSA BAKIM subtitle
             Text(
-                text = "BURSA",
+                text = "BURSA BAKIM",
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Light,
                     letterSpacing = 8.sp
