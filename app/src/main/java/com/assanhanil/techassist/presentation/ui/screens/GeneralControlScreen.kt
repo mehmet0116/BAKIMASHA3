@@ -2065,6 +2065,95 @@ private suspend fun exportMergedToExcel(
             currentRow++
         }
         
+        // Create "Yapılacak İşler" sheet for work order items
+        // Build index map for efficient lookup
+        val itemIndexMap = allItems.mapIndexed { index, pair -> pair to index }.toMap()
+        val workOrderItems = allItems.filter { (_, item) -> item.requiresWorkOrder }
+        if (workOrderItems.isNotEmpty()) {
+            val workOrderSheet = excelService.createSheetWithHeader(
+                workbook = workbook,
+                sheetName = "Yapılacak İşler",
+                title = "İş Emri - Yapılacak İşler"
+            )
+            
+            // Set column widths for work order sheet
+            workOrderSheet.setColumnWidth(0, 10 * 256)  // No
+            workOrderSheet.setColumnWidth(1, 25 * 256)  // Makina
+            workOrderSheet.setColumnWidth(2, 30 * 256)  // Başlık
+            workOrderSheet.setColumnWidth(3, 20 * 256)  // Tarih
+            workOrderSheet.setColumnWidth(4, 20 * 256)  // Durum
+            workOrderSheet.setColumnWidth(5, 50 * 256)  // Yapılacak İşler
+            workOrderSheet.setColumnWidth(6, 50 * 256)  // Fotoğraf
+            
+            // Add header row for work order sheet
+            val woHeaderRow = workOrderSheet.createRow(5)
+            woHeaderRow.heightInPoints = 25f
+            val woHeaders = listOf("No", "Makina", "Başlık", "Tarih", "Durum", "Yapılacak İşler", "Fotoğraf")
+            woHeaders.forEachIndexed { index, header ->
+                val cell = woHeaderRow.createCell(index)
+                cell.setCellValue(header)
+                cell.cellStyle = dataStyle
+            }
+            
+            // Add work order items
+            var woCurrentRow = 6
+            workOrderItems.forEachIndexed { index, pair ->
+                val (machineTitle, item) = pair
+                val row = workOrderSheet.createRow(woCurrentRow)
+                row.heightInPoints = 150f
+                
+                // No
+                row.createCell(0).apply {
+                    setCellValue((index + 1).toString())
+                    cellStyle = dataStyle
+                }
+                
+                // Makina
+                row.createCell(1).apply {
+                    setCellValue(machineTitle)
+                    cellStyle = dataStyle
+                }
+                
+                // Başlık
+                row.createCell(2).apply {
+                    setCellValue(item.title)
+                    cellStyle = dataStyle
+                }
+                
+                // Tarih
+                row.createCell(3).apply {
+                    setCellValue(SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(item.timestamp))
+                    cellStyle = dataStyle
+                }
+                
+                // Durum
+                row.createCell(4).apply {
+                    setCellValue(item.status)
+                    cellStyle = dataStyle
+                }
+                
+                // Yapılacak İşler
+                row.createCell(5).apply {
+                    setCellValue(item.workOrderDetails)
+                    cellStyle = dataStyle
+                }
+                
+                // Fotoğraf - reuse temp file from main sheet export using index map
+                val originalIndex = itemIndexMap[pair]
+                if (originalIndex != null && originalIndex < tempFiles.size) {
+                    excelService.embedImageInCell(
+                        workbook = workbook,
+                        sheet = workOrderSheet,
+                        imagePath = tempFiles[originalIndex].absolutePath,
+                        row = woCurrentRow,
+                        column = 6
+                    )
+                }
+                
+                woCurrentRow++
+            }
+        }
+        
         val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val fileName = "GenelKontrol_Birlesik_$timestamp.xlsx"
         val outputFile = File(excelService.getOutputDirectory(), fileName)
