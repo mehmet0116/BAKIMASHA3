@@ -225,6 +225,14 @@ fun TechAssistApp(
                             operatorViewModel = operatorViewModel
                         )
                     }
+                    
+                    composable(Screen.WorkOrder.route) {
+                        WorkOrderScreen(
+                            excelService = excelService,
+                            machineControlViewModel = machineControlViewModel,
+                            operatorViewModel = operatorViewModel
+                        )
+                    }
                 }
             }
         }
@@ -284,6 +292,7 @@ fun DrawerContent(
             Screen.Reports,
             Screen.ExcelTemplateBuilder,
             Screen.GeneralControl,
+            Screen.WorkOrder,
             Screen.Camera,
             Screen.Settings
         )
@@ -369,6 +378,7 @@ private fun getScreenFromRoute(route: String?): Screen? {
         Screen.Reports.route -> Screen.Reports
         Screen.ExcelTemplateBuilder.route -> Screen.ExcelTemplateBuilder
         Screen.GeneralControl.route -> Screen.GeneralControl
+        Screen.WorkOrder.route -> Screen.WorkOrder
         Screen.Camera.route -> Screen.Camera
         Screen.Settings.route -> Screen.Settings
         else -> null
