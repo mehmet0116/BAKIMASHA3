@@ -40,6 +40,9 @@ import com.assanhanil.techassist.domain.model.Operator
 import com.assanhanil.techassist.domain.model.SecurityStatus
 import com.assanhanil.techassist.presentation.ui.components.GlassCard
 import com.assanhanil.techassist.presentation.ui.components.NeonCard
+import com.assanhanil.techassist.presentation.ui.components.NoOperatorsSignatureDialog
+import com.assanhanil.techassist.presentation.ui.components.OperatorSignature
+import com.assanhanil.techassist.presentation.ui.components.OperatorSignatureDialog
 import com.assanhanil.techassist.presentation.ui.theme.LocalThemeColors
 import com.assanhanil.techassist.presentation.viewmodel.MachineControlViewModel
 import com.assanhanil.techassist.presentation.viewmodel.OperatorViewModel
@@ -131,6 +134,11 @@ fun GeneralControlScreen(
     
     // Selected machines for merging
     var selectedMachinesForMerge by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    
+    // Signature dialog states
+    var showSignatureDialog by remember { mutableStateOf(false) }
+    var showNoOperatorsDialog by remember { mutableStateOf(false) }
+    var pendingExportData by remember { mutableStateOf<PendingExportData?>(null) }
     
     // Permission launcher
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -741,58 +749,120 @@ fun GeneralControlScreen(
             onSelectionChange = { selectedMachinesForMerge = it },
             onDismiss = { showMergeDialog = false },
             onMerge = { includeCurrentMachine ->
+                val machinesToMerge = savedMachineControls.filter { it.id in selectedMachinesForMerge }
+                val allItems = mutableListOf<Pair<String, ControlItem>>()
+                val allOperatorIds = mutableSetOf<Long>()
+                
+                // Add current machine items and operators if selected
+                if (includeCurrentMachine && controlItems.isNotEmpty()) {
+                    controlItems.forEach { item ->
+                        allItems.add(currentMachineTitle to item)
+                    }
+                    allOperatorIds.addAll(selectedOperatorIds)
+                }
+                
+                // Add saved machine items and operators
+                machinesToMerge.forEach { machine ->
+                    allOperatorIds.addAll(machine.operatorIds)
+                    machine.controlItems.forEach { data ->
+                        val bitmap = loadBitmapFromFile(data.imagePath)
+                        bitmap?.let {
+                            val item = ControlItem(
+                                id = data.id,
+                                title = data.title,
+                                notes = data.notes,
+                                bitmap = it,
+                                timestamp = Date(data.timestamp),
+                                status = data.status,
+                                securityStatus = data.securityStatus,
+                                requiresWorkOrder = data.requiresWorkOrder,
+                                workOrderDetails = data.workOrderDetails
+                            )
+                            allItems.add(machine.title to item)
+                        }
+                    }
+                }
+                
+                if (allItems.isNotEmpty()) {
+                    // Get operators for signature collection
+                    val operatorsForSignature = allOperators.filter { it.id in allOperatorIds }
+                    
+                    // Store pending export data
+                    pendingExportData = PendingExportData(
+                        items = allItems,
+                        operators = operatorsForSignature
+                    )
+                    
+                    showMergeDialog = false
+                    
+                    // Show signature dialog if there are operators, otherwise show no-operators dialog
+                    if (operatorsForSignature.isNotEmpty()) {
+                        showSignatureDialog = true
+                    } else {
+                        showNoOperatorsDialog = true
+                    }
+                } else {
+                    Toast.makeText(context, "Birleştirilecek veri bulunamadı", Toast.LENGTH_SHORT).show()
+                }
+            }
+        )
+    }
+    
+    // Signature Dialog - shown before export
+    if (showSignatureDialog && pendingExportData != null) {
+        OperatorSignatureDialog(
+            operators = pendingExportData!!.operators,
+            onDismiss = { 
+                showSignatureDialog = false
+                pendingExportData = null
+            },
+            onConfirm = { signatures ->
                 scope.launch {
                     try {
-                        val machinesToMerge = savedMachineControls.filter { it.id in selectedMachinesForMerge }
-                        val allItems = mutableListOf<Pair<String, ControlItem>>()
-                        val allOperatorIds = mutableSetOf<Long>()
-                        
-                        // Add current machine items and operators if selected
-                        if (includeCurrentMachine && controlItems.isNotEmpty()) {
-                            controlItems.forEach { item ->
-                                allItems.add(currentMachineTitle to item)
-                            }
-                            allOperatorIds.addAll(selectedOperatorIds)
-                        }
-                        
-                        // Add saved machine items and operators
-                        machinesToMerge.forEach { machine ->
-                            allOperatorIds.addAll(machine.operatorIds)
-                            machine.controlItems.forEach { data ->
-                                val bitmap = loadBitmapFromFile(data.imagePath)
-                                bitmap?.let {
-                                    val item = ControlItem(
-                                        id = data.id,
-                                        title = data.title,
-                                        notes = data.notes,
-                                        bitmap = it,
-                                        timestamp = Date(data.timestamp),
-                                        status = data.status,
-                                        securityStatus = data.securityStatus,
-                                        requiresWorkOrder = data.requiresWorkOrder,
-                                        workOrderDetails = data.workOrderDetails
-                                    )
-                                    allItems.add(machine.title to item)
-                                }
-                            }
-                        }
-                        
-                        // Get operator names for Excel export
-                        val operatorNames = allOperators
-                            .filter { it.id in allOperatorIds }
-                            .map { it.name }
+                        val operatorNames = pendingExportData!!.operators.map { it.name }
+                        val file = exportMergedToExcelWithSignatures(
+                            context = context,
+                            excelService = excelService,
+                            allItems = pendingExportData!!.items,
+                            operatorNames = operatorNames,
+                            operatorSignatures = signatures
+                        )
+                        mergedFile = file
                         mergedOperatorNames = operatorNames
-                        
-                        if (allItems.isNotEmpty()) {
-                            val file = exportMergedToExcel(context, excelService, allItems, operatorNames)
-                            mergedFile = file
-                            showMergeDialog = false
-                            showSaveLocationDialog = true
-                        } else {
-                            Toast.makeText(context, "Birleştirilecek veri bulunamadı", Toast.LENGTH_SHORT).show()
-                        }
+                        showSignatureDialog = false
+                        pendingExportData = null
+                        showSaveLocationDialog = true
                     } catch (e: Exception) {
-                        Toast.makeText(context, "Birleştirme hatası: ${e.message}", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, "Excel oluşturma hatası: ${e.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+        )
+    }
+    
+    // No Operators Dialog - shown when trying to export without operators
+    if (showNoOperatorsDialog && pendingExportData != null) {
+        NoOperatorsSignatureDialog(
+            onDismiss = {
+                showNoOperatorsDialog = false
+                pendingExportData = null
+            },
+            onContinueWithoutSignature = {
+                scope.launch {
+                    try {
+                        val file = exportMergedToExcel(
+                            context = context,
+                            excelService = excelService,
+                            allItems = pendingExportData!!.items,
+                            operatorNames = emptyList()
+                        )
+                        mergedFile = file
+                        mergedOperatorNames = emptyList()
+                        showNoOperatorsDialog = false
+                        pendingExportData = null
+                        showSaveLocationDialog = true
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "Excel oluşturma hatası: ${e.message}", Toast.LENGTH_LONG).show()
                     }
                 }
             }
@@ -2164,6 +2234,272 @@ private suspend fun exportMergedToExcel(
         outputFile
     } finally {
         tempFiles.forEach { it.delete() }
+        workOrderTempFiles.values.forEach { it.delete() }
+    }
+}
+
+/**
+ * Data class to hold pending export data between dialogs.
+ */
+private data class PendingExportData(
+    val items: List<Pair<String, ControlItem>>,
+    val operators: List<Operator>
+)
+
+/**
+ * Export merged data to Excel with operator signatures.
+ * This function includes signatures at the bottom of the Excel report.
+ */
+private suspend fun exportMergedToExcelWithSignatures(
+    context: Context,
+    excelService: ExcelService,
+    allItems: List<Pair<String, ControlItem>>,
+    operatorNames: List<String>,
+    operatorSignatures: List<OperatorSignature>
+): File = withContext(Dispatchers.IO) {
+    val workbook = excelService.createWorkbook()
+    val sheet = excelService.createSheetWithHeader(
+        workbook = workbook,
+        sheetName = "Birleşik Kontrol",
+        title = "Birleşik Genel Kontrol Raporu"
+    )
+    
+    // Set column widths
+    sheet.setColumnWidth(0, 10 * 256)  // No
+    sheet.setColumnWidth(1, 25 * 256)  // Makina
+    sheet.setColumnWidth(2, 30 * 256)  // Başlık
+    sheet.setColumnWidth(3, 30 * 256)  // Notlar
+    sheet.setColumnWidth(4, 20 * 256)  // Tarih
+    sheet.setColumnWidth(5, 20 * 256)  // Durum
+    sheet.setColumnWidth(6, 50 * 256)  // Fotoğraf
+    
+    val dataStyle = excelService.createDataStyle(workbook)
+    
+    // Add Operators row if operators are available
+    var startDataRow = 5
+    if (operatorNames.isNotEmpty()) {
+        val operatorsRow = sheet.createRow(4)
+        operatorsRow.heightInPoints = 20f
+        val operatorsCell = operatorsRow.createCell(0)
+        operatorsCell.setCellValue("Kontrol Yapan Operatörler: ${operatorNames.joinToString(", ")}")
+        operatorsCell.cellStyle = dataStyle
+        startDataRow = 6
+    }
+    
+    // Add header row
+    val headerRow = sheet.createRow(startDataRow)
+    headerRow.heightInPoints = 25f
+    val headers = listOf("No", "Makina", "Başlık", "Notlar", "Tarih", "Durum", "Fotoğraf")
+    headers.forEachIndexed { index, header ->
+        val cell = headerRow.createCell(index)
+        cell.setCellValue(header)
+        cell.cellStyle = dataStyle
+    }
+    
+    val exportSessionId = System.currentTimeMillis()
+    val tempFiles = mutableListOf<File>()
+    val signatureTempFiles = mutableListOf<File>()
+    val workOrderTempFiles = mutableMapOf<Int, File>()
+    
+    try {
+        // Partition items into control items (for main sheet) and work order items (for Yapılacak İşler sheet)
+        val (controlItems, workOrderItems) = allItems.partition { (_, item) -> !item.requiresWorkOrder }
+        
+        var currentRow = startDataRow + 1
+        controlItems.forEachIndexed { index, (machineTitle, item) ->
+            val row = sheet.createRow(currentRow)
+            row.heightInPoints = 150f
+            
+            // No
+            row.createCell(0).apply {
+                setCellValue((index + 1).toString())
+                cellStyle = dataStyle
+            }
+            
+            // Makina
+            row.createCell(1).apply {
+                setCellValue(machineTitle)
+                cellStyle = dataStyle
+            }
+            
+            // Başlık
+            row.createCell(2).apply {
+                setCellValue(item.title)
+                cellStyle = dataStyle
+            }
+            
+            // Notlar
+            row.createCell(3).apply {
+                setCellValue(item.notes)
+                cellStyle = dataStyle
+            }
+            
+            // Tarih
+            row.createCell(4).apply {
+                setCellValue(SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(item.timestamp))
+                cellStyle = dataStyle
+            }
+            
+            // Durum
+            row.createCell(5).apply {
+                setCellValue(item.status)
+                cellStyle = dataStyle
+            }
+            
+            // Fotoğraf
+            val tempImageFile = File(context.cacheDir, "merged_sig_${exportSessionId}_${index}.jpg")
+            FileOutputStream(tempImageFile).use { outputStream ->
+                item.bitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
+            }
+            tempFiles.add(tempImageFile)
+            
+            excelService.embedImageInCell(
+                workbook = workbook,
+                sheet = sheet,
+                imagePath = tempImageFile.absolutePath,
+                row = currentRow,
+                column = 6
+            )
+            
+            currentRow++
+        }
+        
+        // Add spacing before signatures
+        currentRow += 2
+        
+        // Save signature bitmaps to temp files and embed them
+        val signatureData = operatorSignatures.mapNotNull { sig ->
+            sig.signatureBitmap?.let { bitmap ->
+                val sigFile = File(context.cacheDir, "signature_${exportSessionId}_${sig.operatorId}.png")
+                FileOutputStream(sigFile).use { outputStream ->
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+                }
+                signatureTempFiles.add(sigFile)
+                sig.operatorName to sigFile.absolutePath
+            }
+        }
+        
+        // Embed operator signatures
+        if (signatureData.isNotEmpty()) {
+            currentRow = excelService.embedOperatorSignatures(
+                workbook = workbook,
+                sheet = sheet,
+                signatures = signatureData,
+                startRow = currentRow
+            )
+        }
+        
+        // Create "Yapılacak İşler" sheet for work order items
+        if (workOrderItems.isNotEmpty()) {
+            val workOrderSheet = excelService.createSheetWithHeader(
+                workbook = workbook,
+                sheetName = "Yapılacak İşler",
+                title = "İş Emri - Yapılacak İşler"
+            )
+            
+            // Set column widths for work order sheet
+            workOrderSheet.setColumnWidth(0, 10 * 256)  // No
+            workOrderSheet.setColumnWidth(1, 25 * 256)  // Makina
+            workOrderSheet.setColumnWidth(2, 30 * 256)  // Başlık
+            workOrderSheet.setColumnWidth(3, 20 * 256)  // Tarih
+            workOrderSheet.setColumnWidth(4, 20 * 256)  // Durum
+            workOrderSheet.setColumnWidth(5, 50 * 256)  // Yapılacak İşler
+            workOrderSheet.setColumnWidth(6, 50 * 256)  // Fotoğraf
+            
+            // Add header row for work order sheet
+            val woHeaderRow = workOrderSheet.createRow(5)
+            woHeaderRow.heightInPoints = 25f
+            val woHeaders = listOf("No", "Makina", "Başlık", "Tarih", "Durum", "Yapılacak İşler", "Fotoğraf")
+            woHeaders.forEachIndexed { index, header ->
+                val cell = woHeaderRow.createCell(index)
+                cell.setCellValue(header)
+                cell.cellStyle = dataStyle
+            }
+            
+            // Add work order items
+            var woCurrentRow = 6
+            workOrderItems.forEachIndexed { index, pair ->
+                val (machineTitle, item) = pair
+                val row = workOrderSheet.createRow(woCurrentRow)
+                row.heightInPoints = 150f
+                
+                // No
+                row.createCell(0).apply {
+                    setCellValue((index + 1).toString())
+                    cellStyle = dataStyle
+                }
+                
+                // Makina
+                row.createCell(1).apply {
+                    setCellValue(machineTitle)
+                    cellStyle = dataStyle
+                }
+                
+                // Başlık
+                row.createCell(2).apply {
+                    setCellValue(item.title)
+                    cellStyle = dataStyle
+                }
+                
+                // Tarih
+                row.createCell(3).apply {
+                    setCellValue(SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(item.timestamp))
+                    cellStyle = dataStyle
+                }
+                
+                // Durum
+                row.createCell(4).apply {
+                    setCellValue(item.status)
+                    cellStyle = dataStyle
+                }
+                
+                // Yapılacak İşler
+                row.createCell(5).apply {
+                    setCellValue(item.workOrderDetails)
+                    cellStyle = dataStyle
+                }
+                
+                // Fotoğraf
+                val woTempImageFile = File(context.cacheDir, "workorder_sig_${exportSessionId}_${index}.jpg")
+                FileOutputStream(woTempImageFile).use { outputStream ->
+                    item.bitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
+                }
+                workOrderTempFiles[index] = woTempImageFile
+                
+                excelService.embedImageInCell(
+                    workbook = workbook,
+                    sheet = workOrderSheet,
+                    imagePath = woTempImageFile.absolutePath,
+                    row = woCurrentRow,
+                    column = 6
+                )
+                
+                woCurrentRow++
+            }
+            
+            // Add signatures to work order sheet as well
+            if (signatureData.isNotEmpty()) {
+                woCurrentRow += 2
+                excelService.embedOperatorSignatures(
+                    workbook = workbook,
+                    sheet = workOrderSheet,
+                    signatures = signatureData,
+                    startRow = woCurrentRow
+                )
+            }
+        }
+        
+        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val fileName = "GenelKontrol_Birlesik_$timestamp.xlsx"
+        val outputFile = File(excelService.getOutputDirectory(), fileName)
+        
+        excelService.saveWorkbook(workbook, outputFile.absolutePath)
+        workbook.close()
+        
+        outputFile
+    } finally {
+        tempFiles.forEach { it.delete() }
+        signatureTempFiles.forEach { it.delete() }
         workOrderTempFiles.values.forEach { it.delete() }
     }
 }

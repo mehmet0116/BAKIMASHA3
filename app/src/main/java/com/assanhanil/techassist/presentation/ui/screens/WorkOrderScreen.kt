@@ -36,6 +36,9 @@ import com.assanhanil.techassist.domain.model.Operator
 import com.assanhanil.techassist.domain.model.SecurityStatus
 import com.assanhanil.techassist.presentation.ui.components.GlassCard
 import com.assanhanil.techassist.presentation.ui.components.NeonCard
+import com.assanhanil.techassist.presentation.ui.components.NoOperatorsSignatureDialog
+import com.assanhanil.techassist.presentation.ui.components.OperatorSignature
+import com.assanhanil.techassist.presentation.ui.components.OperatorSignatureDialog
 import com.assanhanil.techassist.presentation.ui.theme.LocalThemeColors
 import com.assanhanil.techassist.presentation.viewmodel.MachineControlViewModel
 import com.assanhanil.techassist.presentation.viewmodel.OperatorViewModel
@@ -120,6 +123,11 @@ fun WorkOrderScreen(
     var showExportDialog by remember { mutableStateOf(false) }
     var generatedFile by remember { mutableStateOf<File?>(null) }
     var showSaveLocationDialog by remember { mutableStateOf(false) }
+    
+    // Signature dialog states
+    var showSignatureDialog by remember { mutableStateOf(false) }
+    var showNoOperatorsDialog by remember { mutableStateOf(false) }
+    var pendingWorkOrderExport by remember { mutableStateOf<PendingWorkOrderExport?>(null) }
     
     // Document create launcher for save location
     val createDocumentLauncher = rememberLauncherForActivityResult(
@@ -304,21 +312,27 @@ fun WorkOrderScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        scope.launch {
-                            try {
-                                val file = exportWorkOrdersToExcel(
-                                    context = context,
-                                    excelService = excelService,
-                                    workOrderItems = workOrderItems,
-                                    allOperators = allOperators,
-                                    savedMachineControls = savedMachineControls
-                                )
-                                generatedFile = file
-                                showExportDialog = false
-                                showSaveLocationDialog = true
-                            } catch (e: Exception) {
-                                Toast.makeText(context, "Aktarma hatası: ${e.message}", Toast.LENGTH_LONG).show()
-                            }
+                        // Get all unique operator IDs from machines with work order items
+                        val machineIdsWithWorkOrders = workOrderItems.map { it.machineId }.toSet()
+                        val allOperatorIds = savedMachineControls
+                            .filter { it.id in machineIdsWithWorkOrders }
+                            .flatMap { it.operatorIds }
+                            .toSet()
+                        val operatorsForSignature = allOperators.filter { it.id in allOperatorIds }
+                        
+                        // Store pending export data
+                        pendingWorkOrderExport = PendingWorkOrderExport(
+                            workOrderItems = workOrderItems,
+                            operators = operatorsForSignature
+                        )
+                        
+                        showExportDialog = false
+                        
+                        // Show signature dialog if there are operators, otherwise show no-operators dialog
+                        if (operatorsForSignature.isNotEmpty()) {
+                            showSignatureDialog = true
+                        } else {
+                            showNoOperatorsDialog = true
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = themeColors.error)
@@ -334,6 +348,66 @@ fun WorkOrderScreen(
                 }
             },
             containerColor = themeColors.surface
+        )
+    }
+    
+    // Signature Dialog - shown before export
+    if (showSignatureDialog && pendingWorkOrderExport != null) {
+        OperatorSignatureDialog(
+            operators = pendingWorkOrderExport!!.operators,
+            onDismiss = { 
+                showSignatureDialog = false
+                pendingWorkOrderExport = null
+            },
+            onConfirm = { signatures ->
+                scope.launch {
+                    try {
+                        val file = exportWorkOrdersToExcelWithSignatures(
+                            context = context,
+                            excelService = excelService,
+                            workOrderItems = pendingWorkOrderExport!!.workOrderItems,
+                            allOperators = allOperators,
+                            savedMachineControls = savedMachineControls,
+                            operatorSignatures = signatures
+                        )
+                        generatedFile = file
+                        showSignatureDialog = false
+                        pendingWorkOrderExport = null
+                        showSaveLocationDialog = true
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "Excel oluşturma hatası: ${e.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+        )
+    }
+    
+    // No Operators Dialog - shown when trying to export without operators
+    if (showNoOperatorsDialog && pendingWorkOrderExport != null) {
+        NoOperatorsSignatureDialog(
+            onDismiss = {
+                showNoOperatorsDialog = false
+                pendingWorkOrderExport = null
+            },
+            onContinueWithoutSignature = {
+                scope.launch {
+                    try {
+                        val file = exportWorkOrdersToExcel(
+                            context = context,
+                            excelService = excelService,
+                            workOrderItems = pendingWorkOrderExport!!.workOrderItems,
+                            allOperators = allOperators,
+                            savedMachineControls = savedMachineControls
+                        )
+                        generatedFile = file
+                        showNoOperatorsDialog = false
+                        pendingWorkOrderExport = null
+                        showSaveLocationDialog = true
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "Excel oluşturma hatası: ${e.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
         )
     }
     
@@ -929,5 +1003,284 @@ private suspend fun exportWorkOrdersToExcel(
         outputFile
     } finally {
         tempFilesMap.values.forEach { file -> runCatching { file.delete() } }
+    }
+}
+
+/**
+ * Data class to hold pending work order export data between dialogs.
+ */
+private data class PendingWorkOrderExport(
+    val workOrderItems: List<WorkOrderItem>,
+    val operators: List<Operator>
+)
+
+/**
+ * Export work orders to Excel with operator signatures.
+ */
+private suspend fun exportWorkOrdersToExcelWithSignatures(
+    context: Context,
+    excelService: ExcelService,
+    workOrderItems: List<WorkOrderItem>,
+    allOperators: List<Operator>,
+    savedMachineControls: List<MachineControl>,
+    operatorSignatures: List<OperatorSignature>
+): File = withContext(Dispatchers.IO) {
+    val workbook = excelService.createWorkbook()
+    val sheet = excelService.createSheetWithHeader(
+        workbook = workbook,
+        sheetName = "İş Emirleri",
+        title = "İş Emri - Yapılacak İşler"
+    )
+    
+    // Set column widths
+    sheet.setColumnWidth(0, 10 * 256)  // No
+    sheet.setColumnWidth(1, 25 * 256)  // Makina
+    sheet.setColumnWidth(2, 30 * 256)  // Başlık
+    sheet.setColumnWidth(3, 20 * 256)  // Tarih
+    sheet.setColumnWidth(4, 20 * 256)  // Durum
+    sheet.setColumnWidth(5, 50 * 256)  // Yapılacak İşler
+    sheet.setColumnWidth(6, 50 * 256)  // Fotoğraf
+    
+    val dataStyle = excelService.createDataStyle(workbook)
+    
+    // Get all unique operator IDs from machines with work order items
+    val machineIdsWithWorkOrders = workOrderItems.map { it.machineId }.toSet()
+    val allOperatorIds = savedMachineControls
+        .filter { it.id in machineIdsWithWorkOrders }
+        .flatMap { it.operatorIds }
+        .toSet()
+    val operatorNames = allOperators
+        .filter { it.id in allOperatorIds }
+        .map { it.name }
+    
+    // Add Operators row if operators are available
+    var startDataRow = 5
+    if (operatorNames.isNotEmpty()) {
+        val operatorsRow = sheet.createRow(4)
+        operatorsRow.heightInPoints = 20f
+        val operatorsCell = operatorsRow.createCell(0)
+        operatorsCell.setCellValue("Kontrol Yapan Operatörler: ${operatorNames.joinToString(", ")}")
+        operatorsCell.cellStyle = dataStyle
+        startDataRow = 6
+    }
+    
+    // Add header row
+    val headerRow = sheet.createRow(startDataRow)
+    headerRow.heightInPoints = 25f
+    val headers = listOf("No", "Makina", "Başlık", "Tarih", "Durum", "Yapılacak İşler", "Fotoğraf")
+    headers.forEachIndexed { index, header ->
+        val cell = headerRow.createCell(index)
+        cell.setCellValue(header)
+        cell.cellStyle = dataStyle
+    }
+    
+    val exportSessionId = java.util.UUID.randomUUID().toString().take(8)
+    val tempFilesMap = mutableMapOf<Int, File>()
+    val signatureTempFiles = mutableListOf<File>()
+    
+    // Create "Yapılacak İşler" sheet at the beginning alongside main sheet
+    val yapilacakIslerSheet = excelService.createSheetWithHeader(
+        workbook = workbook,
+        sheetName = "Yapılacak İşler",
+        title = "Yapılacak İşler Detay"
+    )
+    
+    try {
+        var currentRow = startDataRow + 1
+        workOrderItems.forEachIndexed { index, item ->
+            val row = sheet.createRow(currentRow)
+            row.heightInPoints = 150f
+            
+            // No
+            row.createCell(0).apply {
+                setCellValue((index + 1).toString())
+                cellStyle = dataStyle
+            }
+            
+            // Makina
+            row.createCell(1).apply {
+                setCellValue(item.machineTitle)
+                cellStyle = dataStyle
+            }
+            
+            // Başlık
+            row.createCell(2).apply {
+                setCellValue(item.title)
+                cellStyle = dataStyle
+            }
+            
+            // Tarih
+            row.createCell(3).apply {
+                setCellValue(SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(item.timestamp))
+                cellStyle = dataStyle
+            }
+            
+            // Durum
+            row.createCell(4).apply {
+                setCellValue(item.status)
+                cellStyle = dataStyle
+            }
+            
+            // Yapılacak İşler
+            row.createCell(5).apply {
+                setCellValue(item.workOrderDetails)
+                cellStyle = dataStyle
+            }
+            
+            // Fotoğraf
+            item.bitmap?.let { bitmap ->
+                val tempImageFile = File(context.cacheDir, "techassist_workorder_sig_${exportSessionId}_${index}.jpg")
+                FileOutputStream(tempImageFile).use { outputStream ->
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
+                }
+                tempFilesMap[index] = tempImageFile
+                
+                excelService.embedImageInCell(
+                    workbook = workbook,
+                    sheet = sheet,
+                    imagePath = tempImageFile.absolutePath,
+                    row = currentRow,
+                    column = 6
+                )
+            }
+            
+            currentRow++
+        }
+        
+        // Add spacing before signatures
+        currentRow += 2
+        
+        // Save signature bitmaps to temp files and embed them
+        val signatureData = operatorSignatures.mapNotNull { sig ->
+            sig.signatureBitmap?.let { bitmap ->
+                val sigFile = File(context.cacheDir, "wo_signature_${exportSessionId}_${sig.operatorId}.png")
+                FileOutputStream(sigFile).use { outputStream ->
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+                }
+                signatureTempFiles.add(sigFile)
+                sig.operatorName to sigFile.absolutePath
+            }
+        }
+        
+        // Embed operator signatures on main sheet
+        if (signatureData.isNotEmpty()) {
+            currentRow = excelService.embedOperatorSignatures(
+                workbook = workbook,
+                sheet = sheet,
+                signatures = signatureData,
+                startRow = currentRow
+            )
+        }
+        
+        // Configure "Yapılacak İşler" sheet
+        
+        // Set column widths for Yapılacak İşler sheet
+        yapilacakIslerSheet.setColumnWidth(0, 10 * 256)  // No
+        yapilacakIslerSheet.setColumnWidth(1, 30 * 256)  // Makina İsmi
+        yapilacakIslerSheet.setColumnWidth(2, 35 * 256)  // Kontrol Başlığı
+        yapilacakIslerSheet.setColumnWidth(3, 50 * 256)  // Açıklama (Notes)
+        yapilacakIslerSheet.setColumnWidth(4, 50 * 256)  // Yapılacak İşler
+        yapilacakIslerSheet.setColumnWidth(5, 20 * 256)  // Tarih
+        yapilacakIslerSheet.setColumnWidth(6, 50 * 256)  // Fotoğraf
+        
+        // Add Operators row to Yapılacak İşler sheet if operators are available
+        var yiStartDataRow = 5
+        if (operatorNames.isNotEmpty()) {
+            val yiOperatorsRow = yapilacakIslerSheet.createRow(4)
+            yiOperatorsRow.heightInPoints = 20f
+            val yiOperatorsCell = yiOperatorsRow.createCell(0)
+            yiOperatorsCell.setCellValue("Kontrol Yapan Operatörler: ${operatorNames.joinToString(", ")}")
+            yiOperatorsCell.cellStyle = dataStyle
+            yiStartDataRow = 6
+        }
+        
+        // Add header row to Yapılacak İşler sheet
+        val yiHeaderRow = yapilacakIslerSheet.createRow(yiStartDataRow)
+        yiHeaderRow.heightInPoints = 25f
+        val yiHeaders = listOf("No", "Makina İsmi", "Kontrol Başlığı", "Açıklama", "Yapılacak İşler", "Tarih", "Fotoğraf")
+        yiHeaders.forEachIndexed { index, header ->
+            val cell = yiHeaderRow.createCell(index)
+            cell.setCellValue(header)
+            cell.cellStyle = dataStyle
+        }
+        
+        // Add work order items to Yapılacak İşler sheet
+        var yiCurrentRow = yiStartDataRow + 1
+        workOrderItems.forEachIndexed { index, item ->
+            val row = yapilacakIslerSheet.createRow(yiCurrentRow)
+            row.heightInPoints = 150f
+            
+            // No
+            row.createCell(0).apply {
+                setCellValue((index + 1).toString())
+                cellStyle = dataStyle
+            }
+            
+            // Makina İsmi
+            row.createCell(1).apply {
+                setCellValue(item.machineTitle)
+                cellStyle = dataStyle
+            }
+            
+            // Kontrol Başlığı
+            row.createCell(2).apply {
+                setCellValue(item.title)
+                cellStyle = dataStyle
+            }
+            
+            // Açıklama (Notes)
+            row.createCell(3).apply {
+                setCellValue(item.notes)
+                cellStyle = dataStyle
+            }
+            
+            // Yapılacak İşler
+            row.createCell(4).apply {
+                setCellValue(item.workOrderDetails)
+                cellStyle = dataStyle
+            }
+            
+            // Tarih
+            row.createCell(5).apply {
+                setCellValue(SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(item.timestamp))
+                cellStyle = dataStyle
+            }
+            
+            // Fotoğraf - reuse existing temp files using proper index mapping
+            tempFilesMap[index]?.let { tempFile ->
+                excelService.embedImageInCell(
+                    workbook = workbook,
+                    sheet = yapilacakIslerSheet,
+                    imagePath = tempFile.absolutePath,
+                    row = yiCurrentRow,
+                    column = 6
+                )
+            }
+            
+            yiCurrentRow++
+        }
+        
+        // Add signatures to Yapılacak İşler sheet as well
+        if (signatureData.isNotEmpty()) {
+            yiCurrentRow += 2
+            excelService.embedOperatorSignatures(
+                workbook = workbook,
+                sheet = yapilacakIslerSheet,
+                signatures = signatureData,
+                startRow = yiCurrentRow
+            )
+        }
+        
+        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val fileName = "IsEmri_$timestamp.xlsx"
+        val outputFile = File(excelService.getOutputDirectory(), fileName)
+        
+        excelService.saveWorkbook(workbook, outputFile.absolutePath)
+        workbook.close()
+        
+        outputFile
+    } finally {
+        tempFilesMap.values.forEach { file -> runCatching { file.delete() } }
+        signatureTempFiles.forEach { file -> runCatching { file.delete() } }
     }
 }
