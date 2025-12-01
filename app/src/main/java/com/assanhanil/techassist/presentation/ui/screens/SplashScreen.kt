@@ -10,7 +10,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -21,11 +20,10 @@ import kotlinx.coroutines.delay
 private const val SPLASH_DURATION_MS = 2500L
 
 /**
- * Animated Splash Screen for ASSANHANİL BURSA.
+ * Animated Splash Screen for ASSAN HANİL BURSA BAKIM.
  * 
  * Features:
  * - Animated logo with scale and fade effects
- * - Tagline "Operational Reporting System"
  * - Dynamic theme support
  * - Neon Blue accents
  */
@@ -56,17 +54,6 @@ fun SplashScreen(
             easing = LinearEasing
         ),
         label = "logoAlpha"
-    )
-    
-    // Tagline alpha animation (delayed)
-    val taglineAlpha by animateFloatAsState(
-        targetValue = if (startAnimation) 1f else 0f,
-        animationSpec = tween(
-            durationMillis = 800,
-            delayMillis = 500,
-            easing = LinearEasing
-        ),
-        label = "taglineAlpha"
     )
     
     // Neon glow pulse animation
@@ -108,7 +95,7 @@ fun SplashScreen(
             ) {
                 // Glow layer (behind)
                 Text(
-                    text = "ASSAN HANAİL",
+                    text = "ASSAN HANİL",
                     style = MaterialTheme.typography.displaySmall.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = 42.sp,
@@ -121,7 +108,7 @@ fun SplashScreen(
                 
                 // Main text
                 Text(
-                    text = "ASSAN HANAİL",
+                    text = "ASSAN HANİL",
                     style = MaterialTheme.typography.displaySmall.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = 42.sp,
@@ -146,68 +133,6 @@ fun SplashScreen(
                 modifier = Modifier
                     .scale(logoScale)
                     .alpha(logoAlpha)
-            )
-            
-            Spacer(modifier = Modifier.height(32.dp))
-            
-            // Divider line with gradient
-            Box(
-                modifier = Modifier
-                    .width(200.dp)
-                    .height(2.dp)
-                    .alpha(taglineAlpha)
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                themeColors.primary.copy(alpha = 0f),
-                                themeColors.primary,
-                                themeColors.primary.copy(alpha = 0f)
-                            )
-                        )
-                    )
-            )
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Tagline
-            Text(
-                text = "Operasyonel Raporlama Sistemi",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Normal,
-                    letterSpacing = 2.sp
-                ),
-                color = themeColors.textSecondary,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.alpha(taglineAlpha)
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            // Tech-Assist subtitle
-            Text(
-                text = "TECH-ASSIST",
-                style = MaterialTheme.typography.labelLarge.copy(
-                    fontWeight = FontWeight.Medium,
-                    letterSpacing = 4.sp
-                ),
-                color = themeColors.primary.copy(alpha = 0.7f),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.alpha(taglineAlpha)
-            )
-        }
-        
-        // Bottom branding
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 48.dp)
-                .alpha(taglineAlpha)
-        ) {
-            Text(
-                text = "Endüstriyel Mühendislik Platformu",
-                style = MaterialTheme.typography.bodySmall,
-                color = themeColors.textDisabled,
-                textAlign = TextAlign.Center
             )
         }
     }
