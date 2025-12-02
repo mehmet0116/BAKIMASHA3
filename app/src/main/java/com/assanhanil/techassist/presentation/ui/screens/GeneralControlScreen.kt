@@ -896,79 +896,49 @@ fun GeneralControlScreen(
         )
     }
     
+    // Helper function to cleanup merged data after successful export
+    fun cleanupAfterExport(showToast: Boolean = true) {
+        // Clear current machine data if it was included in the merge
+        if (clearCurrentAfterExport) {
+            controlItems = emptyList()
+            nextItemId = 1
+            selectedOperatorIds = emptySet()
+            currentMachineTitle = ""
+            currentMachineId = 0
+            clearCurrentAfterExport = false
+        }
+        // Clear saved machine controls that were included in the merge
+        if (machineIdsToCleanupAfterExport.isNotEmpty()) {
+            machineControlViewModel.deactivateMachineControlsByIds(
+                machineControlIds = machineIdsToCleanupAfterExport.toList()
+            ) {
+                if (showToast) {
+                    Toast.makeText(context, "Birleştirilmiş veriler temizlendi", Toast.LENGTH_SHORT).show()
+                }
+            }
+            machineIdsToCleanupAfterExport = emptySet()
+            selectedMachinesForMerge = emptySet()
+        }
+    }
+    
     // Save/Share Location Dialog
     if (showSaveLocationDialog && mergedFile != null) {
         SaveShareDialog(
             onDismiss = { 
                 showSaveLocationDialog = false
-                // Clear all data after closing dialog (export completed)
-                // Clear current machine data
-                if (clearCurrentAfterExport) {
-                    controlItems = emptyList()
-                    nextItemId = 1
-                    selectedOperatorIds = emptySet()
-                    currentMachineTitle = ""
-                    currentMachineId = 0
-                    clearCurrentAfterExport = false
-                }
-                // Clear saved machine controls that were included in the merge
-                if (machineIdsToCleanupAfterExport.isNotEmpty()) {
-                    machineControlViewModel.deactivateMachineControlsByIds(
-                        machineControlIds = machineIdsToCleanupAfterExport.toList()
-                    ) {
-                        Toast.makeText(context, "Birleştirilmiş veriler temizlendi", Toast.LENGTH_SHORT).show()
-                    }
-                    machineIdsToCleanupAfterExport = emptySet()
-                    selectedMachinesForMerge = emptySet()
-                }
+                cleanupAfterExport(showToast = true)
             },
             onSave = {
                 val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
                 createDocumentLauncher.launch("GenelKontrol_Birlesik_$timestamp.xlsx")
-                // Clear all data after save
-                // Clear current machine data
-                if (clearCurrentAfterExport) {
-                    controlItems = emptyList()
-                    nextItemId = 1
-                    selectedOperatorIds = emptySet()
-                    currentMachineTitle = ""
-                    currentMachineId = 0
-                    clearCurrentAfterExport = false
-                }
-                // Clear saved machine controls that were included in the merge
-                if (machineIdsToCleanupAfterExport.isNotEmpty()) {
-                    machineControlViewModel.deactivateMachineControlsByIds(
-                        machineControlIds = machineIdsToCleanupAfterExport.toList()
-                    )
-                    machineIdsToCleanupAfterExport = emptySet()
-                    selectedMachinesForMerge = emptySet()
-                }
+                cleanupAfterExport(showToast = false)
             },
             onShare = {
                 mergedFile?.let { file ->
                     shareExcelFile(context, file)
                 }
                 showSaveLocationDialog = false
-                // Clear all data after share
-                // Clear current machine data
-                if (clearCurrentAfterExport) {
-                    controlItems = emptyList()
-                    nextItemId = 1
-                    selectedOperatorIds = emptySet()
-                    currentMachineTitle = ""
-                    currentMachineId = 0
-                    clearCurrentAfterExport = false
-                }
-                // Clear saved machine controls that were included in the merge
-                if (machineIdsToCleanupAfterExport.isNotEmpty()) {
-                    machineControlViewModel.deactivateMachineControlsByIds(
-                        machineControlIds = machineIdsToCleanupAfterExport.toList()
-                    ) {
-                        Toast.makeText(context, "Birleştirilmiş veriler temizlendi", Toast.LENGTH_SHORT).show()
-                    }
-                    machineIdsToCleanupAfterExport = emptySet()
-                    selectedMachinesForMerge = emptySet()
-                }
+                cleanupAfterExport(showToast = true)
             }
         )
     }
