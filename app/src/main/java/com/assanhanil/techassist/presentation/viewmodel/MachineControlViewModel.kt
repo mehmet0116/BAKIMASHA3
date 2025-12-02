@@ -21,6 +21,15 @@ class MachineControlViewModel(
     private val machineControlRepository: MachineControlRepository
 ) : ViewModel() {
 
+    companion object {
+        // Error messages
+        private const val ERROR_LOAD = "Makina kontrolü yüklenirken hata oluştu"
+        private const val ERROR_SAVE = "Makina kontrolü kaydedilirken hata oluştu"
+        private const val ERROR_DELETE = "Makina kontrolü silinirken hata oluştu"
+        private const val ERROR_DEACTIVATE = "Makina kontrolü devre dışı bırakılırken hata oluştu"
+        private const val ERROR_CLEANUP = "Makina kontrolleri temizlenirken hata oluştu"
+    }
+
     // All machine controls from database
     val machineControls: StateFlow<List<MachineControl>> = machineControlRepository.getAllMachineControls()
         .stateIn(
@@ -50,7 +59,7 @@ class MachineControlViewModel(
             try {
                 _selectedMachineControl.value = machineControlRepository.getMachineControlById(id)
             } catch (e: Exception) {
-                _error.value = "Makina kontrolü yüklenirken hata oluştu: ${e.message}"
+                _error.value = "$ERROR_LOAD: ${e.message}"
             } finally {
                 _isLoading.value = false
             }
@@ -66,7 +75,7 @@ class MachineControlViewModel(
             try {
                 _selectedMachineControl.value = machineControlRepository.getMachineControlByTitle(title)
             } catch (e: Exception) {
-                _error.value = "Makina kontrolü yüklenirken hata oluştu: ${e.message}"
+                _error.value = "$ERROR_LOAD: ${e.message}"
             } finally {
                 _isLoading.value = false
             }
@@ -86,7 +95,7 @@ class MachineControlViewModel(
                 _saveSuccess.value = true
                 onSuccess()
             } catch (e: Exception) {
-                _error.value = "Makina kontrolü kaydedilirken hata oluştu: ${e.message}"
+                _error.value = "$ERROR_SAVE: ${e.message}"
             } finally {
                 _isLoading.value = false
             }
@@ -128,7 +137,7 @@ class MachineControlViewModel(
                 _error.value = null
                 onSuccess()
             } catch (e: Exception) {
-                _error.value = "Makina kontrolü silinirken hata oluştu: ${e.message}"
+                _error.value = "$ERROR_DELETE: ${e.message}"
             } finally {
                 _isLoading.value = false
             }
@@ -146,7 +155,7 @@ class MachineControlViewModel(
                 _error.value = null
                 onSuccess()
             } catch (e: Exception) {
-                _error.value = "Makina kontrolü devre dışı bırakılırken hata oluştu: ${e.message}"
+                _error.value = "$ERROR_DEACTIVATE: ${e.message}"
             } finally {
                 _isLoading.value = false
             }
@@ -166,7 +175,7 @@ class MachineControlViewModel(
                 _error.value = null
                 onSuccess()
             } catch (e: Exception) {
-                _error.value = "Makina kontrolleri temizlenirken hata oluştu: ${e.message}"
+                _error.value = "$ERROR_CLEANUP: ${e.message}"
             } finally {
                 _isLoading.value = false
             }
@@ -186,7 +195,7 @@ class MachineControlViewModel(
                 _error.value = null
                 onSuccess()
             } catch (e: Exception) {
-                _error.value = "Makina kontrolleri temizlenirken hata oluştu: ${e.message}"
+                _error.value = "$ERROR_CLEANUP: ${e.message}"
             } finally {
                 _isLoading.value = false
             }
