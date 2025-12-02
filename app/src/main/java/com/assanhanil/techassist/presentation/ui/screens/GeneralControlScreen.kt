@@ -646,29 +646,34 @@ fun GeneralControlScreen(
             machines = savedMachineControls,
             onDismiss = { showSavedMachinesDialog = false },
             onSelect = { machine ->
-                currentMachineTitle = machine.title
-                currentMachineId = machine.id
-                // Load operators from saved machine
-                selectedOperatorIds = machine.operatorIds.toSet()
-                // Load control items from saved machine
-                controlItems = machine.controlItems.mapNotNull { data ->
-                    val bitmap = loadBitmapFromFile(data.imagePath)
-                    bitmap?.let {
-                        ControlItem(
-                            id = data.id,
-                            title = data.title,
-                            notes = data.notes,
-                            bitmap = it,
-                            timestamp = Date(data.timestamp),
-                            status = data.status,
-                            securityStatus = data.securityStatus,
-                            requiresWorkOrder = data.requiresWorkOrder,
-                            workOrderDetails = data.workOrderDetails
-                        )
+                scope.launch {
+                    currentMachineTitle = machine.title
+                    currentMachineId = machine.id
+                    // Load operators from saved machine
+                    selectedOperatorIds = machine.operatorIds.toSet()
+                    // Load control items from saved machine on background thread
+                    val loadedItems = withContext(Dispatchers.IO) {
+                        machine.controlItems.mapNotNull { data ->
+                            val bitmap = loadBitmapFromFile(data.imagePath)
+                            bitmap?.let {
+                                ControlItem(
+                                    id = data.id,
+                                    title = data.title,
+                                    notes = data.notes,
+                                    bitmap = it,
+                                    timestamp = Date(data.timestamp),
+                                    status = data.status,
+                                    securityStatus = data.securityStatus,
+                                    requiresWorkOrder = data.requiresWorkOrder,
+                                    workOrderDetails = data.workOrderDetails
+                                )
+                            }
+                        }
                     }
+                    controlItems = loadedItems
+                    nextItemId = (controlItems.maxOfOrNull { it.id } ?: 0) + 1
+                    showSavedMachinesDialog = false
                 }
-                nextItemId = (controlItems.maxOfOrNull { it.id } ?: 0) + 1
-                showSavedMachinesDialog = false
             },
             onDelete = { machine ->
                 scope.launch {
@@ -758,63 +763,67 @@ fun GeneralControlScreen(
             onSelectionChange = { selectedMachinesForMerge = it },
             onDismiss = { showMergeDialog = false },
             onMerge = { includeCurrentMachine ->
-                val machinesToMerge = savedMachineControls.filter { it.id in selectedMachinesForMerge }
-                val allItems = mutableListOf<Pair<String, ControlItem>>()
-                val allOperatorIds = mutableSetOf<Long>()
-                
-                // Add current machine items and operators if selected
-                if (includeCurrentMachine && controlItems.isNotEmpty()) {
-                    controlItems.forEach { item ->
-                        allItems.add(currentMachineTitle to item)
+                scope.launch {
+                    val machinesToMerge = savedMachineControls.filter { it.id in selectedMachinesForMerge }
+                    val allItems = mutableListOf<Pair<String, ControlItem>>()
+                    val allOperatorIds = mutableSetOf<Long>()
+                    
+                    // Add current machine items and operators if selected
+                    if (includeCurrentMachine && controlItems.isNotEmpty()) {
+                        controlItems.forEach { item ->
+                            allItems.add(currentMachineTitle to item)
+                        }
+                        allOperatorIds.addAll(selectedOperatorIds)
                     }
-                    allOperatorIds.addAll(selectedOperatorIds)
-                }
-                
-                // Add saved machine items and operators
-                machinesToMerge.forEach { machine ->
-                    allOperatorIds.addAll(machine.operatorIds)
-                    machine.controlItems.forEach { data ->
-                        val bitmap = loadBitmapFromFile(data.imagePath)
-                        bitmap?.let {
-                            val item = ControlItem(
-                                id = data.id,
-                                title = data.title,
-                                notes = data.notes,
-                                bitmap = it,
-                                timestamp = Date(data.timestamp),
-                                status = data.status,
-                                securityStatus = data.securityStatus,
-                                requiresWorkOrder = data.requiresWorkOrder,
-                                workOrderDetails = data.workOrderDetails
-                            )
-                            allItems.add(machine.title to item)
+                    
+                    // Add saved machine items and operators (load bitmaps on background thread)
+                    withContext(Dispatchers.IO) {
+                        machinesToMerge.forEach { machine ->
+                            allOperatorIds.addAll(machine.operatorIds)
+                            machine.controlItems.forEach { data ->
+                                val bitmap = loadBitmapFromFile(data.imagePath)
+                                bitmap?.let {
+                                    val item = ControlItem(
+                                        id = data.id,
+                                        title = data.title,
+                                        notes = data.notes,
+                                        bitmap = it,
+                                        timestamp = Date(data.timestamp),
+                                        status = data.status,
+                                        securityStatus = data.securityStatus,
+                                        requiresWorkOrder = data.requiresWorkOrder,
+                                        workOrderDetails = data.workOrderDetails
+                                    )
+                                    allItems.add(machine.title to item)
+                                }
+                            }
                         }
                     }
-                }
-                
-                if (allItems.isNotEmpty()) {
-                    // Get operators for signature collection
-                    val operatorsForSignature = allOperators.filter { it.id in allOperatorIds }
                     
-                    // Store pending export data
-                    pendingExportData = PendingExportData(
-                        items = allItems,
-                        operators = operatorsForSignature
-                    )
-                    
-                    // Mark that we should clear data after export
-                    clearCurrentAfterExport = includeCurrentMachine
-                    
-                    showMergeDialog = false
-                    
-                    // Show signature dialog if there are operators, otherwise show no-operators dialog
-                    if (operatorsForSignature.isNotEmpty()) {
-                        showSignatureDialog = true
+                    if (allItems.isNotEmpty()) {
+                        // Get operators for signature collection
+                        val operatorsForSignature = allOperators.filter { it.id in allOperatorIds }
+                        
+                        // Store pending export data
+                        pendingExportData = PendingExportData(
+                            items = allItems,
+                            operators = operatorsForSignature
+                        )
+                        
+                        // Mark that we should clear data after export
+                        clearCurrentAfterExport = includeCurrentMachine
+                        
+                        showMergeDialog = false
+                        
+                        // Show signature dialog if there are operators, otherwise show no-operators dialog
+                        if (operatorsForSignature.isNotEmpty()) {
+                            showSignatureDialog = true
+                        } else {
+                            showNoOperatorsDialog = true
+                        }
                     } else {
-                        showNoOperatorsDialog = true
+                        Toast.makeText(context, "Birleştirilecek veri bulunamadı", Toast.LENGTH_SHORT).show()
                     }
-                } else {
-                    Toast.makeText(context, "Birleştirilecek veri bulunamadı", Toast.LENGTH_SHORT).show()
                 }
             }
         )
@@ -1160,10 +1169,7 @@ private fun SavedMachinesDialog(
                                     fontWeight = FontWeight.Medium
                                 )
                                 Text(
-                                    text = "${machine.controlItems.size} kontrol • ${
-                                        SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-                                            .format(Date(machine.updatedAt))
-                                    }",
+                                    text = "${machine.controlItems.size} kontrol • ${formatDateShort(machine.updatedAt)}",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = themeColors.textSecondary
                                 )
@@ -1992,6 +1998,11 @@ private fun OperatorSelectionDialog(
 private const val FILE_PROVIDER_AUTHORITY_SUFFIX = ".fileprovider"
 private const val MAX_BITMAP_DIMENSION = 800
 private const val STATUS_WORK_ORDER_REQUIRED = "İş Emri Gerekli"
+private const val DATE_FORMAT_SHORT = "dd/MM/yyyy"
+
+private fun formatDateShort(timestamp: Long): String {
+    return SimpleDateFormat(DATE_FORMAT_SHORT, Locale.getDefault()).format(Date(timestamp))
+}
 
 private fun saveBitmapToFile(context: Context, bitmap: Bitmap, prefix: String): File {
     val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
