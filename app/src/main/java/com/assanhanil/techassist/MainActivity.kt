@@ -31,6 +31,7 @@ import com.assanhanil.techassist.presentation.ui.theme.TechAssistTheme
 import com.assanhanil.techassist.presentation.viewmodel.BearingFinderViewModel
 import com.assanhanil.techassist.presentation.viewmodel.ExcelTemplateViewModel
 import com.assanhanil.techassist.presentation.viewmodel.MachineControlViewModel
+import com.assanhanil.techassist.presentation.viewmodel.MachineNameViewModel
 import com.assanhanil.techassist.presentation.viewmodel.OperatorViewModel
 import com.assanhanil.techassist.service.ExcelService
 import kotlinx.coroutines.launch
@@ -64,6 +65,12 @@ class MainActivity : ComponentActivity() {
         )
     }
 
+    private val machineNameViewModel: MachineNameViewModel by viewModels {
+        MachineNameViewModel.Factory(
+            (application as TechAssistApplication).machineNameRepository
+        )
+    }
+
     private val operatorViewModel: OperatorViewModel by viewModels {
         OperatorViewModel.Factory(
             (application as TechAssistApplication).operatorRepository
@@ -87,6 +94,7 @@ class MainActivity : ComponentActivity() {
                     bearingFinderViewModel = bearingFinderViewModel,
                     excelTemplateViewModel = excelTemplateViewModel,
                     machineControlViewModel = machineControlViewModel,
+                    machineNameViewModel = machineNameViewModel,
                     operatorViewModel = operatorViewModel,
                     excelService = ExcelService(this),
                     themePreferences = themePreferences,
@@ -103,6 +111,7 @@ fun TechAssistApp(
     bearingFinderViewModel: BearingFinderViewModel,
     excelTemplateViewModel: ExcelTemplateViewModel,
     machineControlViewModel: MachineControlViewModel,
+    machineNameViewModel: MachineNameViewModel,
     operatorViewModel: OperatorViewModel,
     excelService: ExcelService,
     themePreferences: ThemePreferences,
@@ -221,7 +230,7 @@ fun TechAssistApp(
                     composable(Screen.GeneralControl.route) {
                         GeneralControlScreen(
                             excelService = excelService,
-                            machineControlViewModel = machineControlViewModel,
+                            machineNameViewModel = machineNameViewModel,
                             operatorViewModel = operatorViewModel
                         )
                     }
