@@ -58,6 +58,16 @@ class MachineControlRepositoryImpl(
         machineControlDao.deactivateMachineControl(machineControlId, System.currentTimeMillis())
     }
 
+    override suspend fun deactivateAllMachineControls() {
+        machineControlDao.deactivateAllMachineControls(System.currentTimeMillis())
+    }
+
+    override suspend fun deactivateMachineControlsByIds(machineControlIds: List<Long>) {
+        if (machineControlIds.isNotEmpty()) {
+            machineControlDao.deactivateMachineControlsByIds(machineControlIds, System.currentTimeMillis())
+        }
+    }
+
     // Extension functions for mapping between domain and entity
     private fun MachineControlEntity.toDomain(): MachineControl {
         return MachineControl(

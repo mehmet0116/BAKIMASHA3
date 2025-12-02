@@ -147,6 +147,9 @@ fun GeneralControlScreen(
     // Track if current machine should be cleared after export
     var clearCurrentAfterExport by remember { mutableStateOf(false) }
     
+    // Track which saved machine IDs should be cleared after export
+    var machineIdsToCleanupAfterExport by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    
     // Permission launcher
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -242,7 +245,7 @@ fun GeneralControlScreen(
             ) {
                 Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Yeni Makina")
+                Text("+ Yeni Makina Ekle")
             }
             
             // Load Saved Machines Button (machines with saved control data)
@@ -607,7 +610,7 @@ fun GeneralControlScreen(
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            // Merge All Button
+            // Merge All and Send Button
             Button(
                 onClick = { showMergeDialog = true },
                 modifier = Modifier.fillMaxWidth(),
@@ -617,7 +620,7 @@ fun GeneralControlScreen(
             ) {
                 Icon(Icons.Default.MergeType, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Hepsini Birleştir")
+                Text("Hepsini birleştir ve gönder")
             }
         }
     }
@@ -813,6 +816,9 @@ fun GeneralControlScreen(
                         // Mark that we should clear data after export
                         clearCurrentAfterExport = includeCurrentMachine
                         
+                        // Track which saved machine IDs to clear after successful export
+                        machineIdsToCleanupAfterExport = selectedMachinesForMerge.toSet()
+                        
                         showMergeDialog = false
                         
                         // Show signature dialog if there are operators, otherwise show no-operators dialog
@@ -890,44 +896,49 @@ fun GeneralControlScreen(
         )
     }
     
+    // Helper function to cleanup merged data after successful export
+    fun cleanupAfterExport(showToast: Boolean = true) {
+        // Clear current machine data if it was included in the merge
+        if (clearCurrentAfterExport) {
+            controlItems = emptyList()
+            nextItemId = 1
+            selectedOperatorIds = emptySet()
+            currentMachineTitle = ""
+            currentMachineId = 0
+            clearCurrentAfterExport = false
+        }
+        // Clear saved machine controls that were included in the merge
+        if (machineIdsToCleanupAfterExport.isNotEmpty()) {
+            machineControlViewModel.deactivateMachineControlsByIds(
+                machineControlIds = machineIdsToCleanupAfterExport.toList()
+            ) {
+                if (showToast) {
+                    Toast.makeText(context, "Birleştirilmiş veriler temizlendi", Toast.LENGTH_SHORT).show()
+                }
+            }
+            machineIdsToCleanupAfterExport = emptySet()
+            selectedMachinesForMerge = emptySet()
+        }
+    }
+    
     // Save/Share Location Dialog
     if (showSaveLocationDialog && mergedFile != null) {
         SaveShareDialog(
             onDismiss = { 
                 showSaveLocationDialog = false
-                // Clear data after closing dialog (export completed)
-                if (clearCurrentAfterExport) {
-                    controlItems = emptyList()
-                    nextItemId = 1
-                    selectedOperatorIds = emptySet()
-                    clearCurrentAfterExport = false
-                    Toast.makeText(context, "Kontrol verileri temizlendi", Toast.LENGTH_SHORT).show()
-                }
+                cleanupAfterExport(showToast = true)
             },
             onSave = {
                 val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
                 createDocumentLauncher.launch("GenelKontrol_Birlesik_$timestamp.xlsx")
-                // Clear data after save
-                if (clearCurrentAfterExport) {
-                    controlItems = emptyList()
-                    nextItemId = 1
-                    selectedOperatorIds = emptySet()
-                    clearCurrentAfterExport = false
-                }
+                cleanupAfterExport(showToast = false)
             },
             onShare = {
                 mergedFile?.let { file ->
                     shareExcelFile(context, file)
                 }
                 showSaveLocationDialog = false
-                // Clear data after share
-                if (clearCurrentAfterExport) {
-                    controlItems = emptyList()
-                    nextItemId = 1
-                    selectedOperatorIds = emptySet()
-                    clearCurrentAfterExport = false
-                    Toast.makeText(context, "Kontrol verileri temizlendi", Toast.LENGTH_SHORT).show()
-                }
+                cleanupAfterExport(showToast = true)
             }
         )
     }

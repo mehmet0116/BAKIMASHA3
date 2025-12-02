@@ -69,4 +69,18 @@ interface MachineControlDao {
      */
     @Query("SELECT COUNT(*) FROM machine_controls WHERE isActive = 1")
     suspend fun getCount(): Int
+
+    /**
+     * Deactivate all active machine controls (soft delete all).
+     * Used after merging and exporting reports to clear temporary records.
+     */
+    @Query("UPDATE machine_controls SET isActive = 0, updatedAt = :timestamp WHERE isActive = 1")
+    suspend fun deactivateAllMachineControls(timestamp: Long)
+
+    /**
+     * Deactivate specific machine controls by their IDs (soft delete batch).
+     * Used after merging and exporting selected machine controls.
+     */
+    @Query("UPDATE machine_controls SET isActive = 0, updatedAt = :timestamp WHERE id IN (:machineControlIds)")
+    suspend fun deactivateMachineControlsByIds(machineControlIds: List<Long>, timestamp: Long)
 }
