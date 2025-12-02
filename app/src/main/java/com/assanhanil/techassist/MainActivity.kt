@@ -230,6 +230,7 @@ fun TechAssistApp(
                     composable(Screen.GeneralControl.route) {
                         GeneralControlScreen(
                             excelService = excelService,
+                            machineControlViewModel = machineControlViewModel,
                             machineNameViewModel = machineNameViewModel,
                             operatorViewModel = operatorViewModel
                         )
