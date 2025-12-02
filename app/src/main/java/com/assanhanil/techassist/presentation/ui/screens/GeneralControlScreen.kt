@@ -36,6 +36,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.assanhanil.techassist.domain.model.ControlItemData
 import com.assanhanil.techassist.domain.model.MachineControl
+import com.assanhanil.techassist.domain.model.MachineName
 import com.assanhanil.techassist.domain.model.Operator
 import com.assanhanil.techassist.domain.model.SecurityStatus
 import com.assanhanil.techassist.presentation.ui.components.GlassCard
@@ -101,6 +102,9 @@ fun GeneralControlScreen(
     // Collect saved machine controls from database
     val savedMachineControls by machineControlViewModel.machineControls.collectAsState()
     
+    // Collect saved machine names (templates) from database
+    val savedMachineNames by machineNameViewModel.machineNames.collectAsState()
+    
     // Collect all available operators
     val allOperators by operatorViewModel.operators.collectAsState()
     
@@ -130,6 +134,7 @@ fun GeneralControlScreen(
     var showSaveLocationDialog by remember { mutableStateOf(false) }
     var showSavedMachinesDialog by remember { mutableStateOf(false) }
     var showOperatorSelectionDialog by remember { mutableStateOf(false) }
+    var showMachineListManagementDialog by remember { mutableStateOf(false) }
     
     var pendingBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var selectedItem by remember { mutableStateOf<ControlItem?>(null) }
@@ -235,7 +240,7 @@ fun GeneralControlScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Create New Machine Button
+            // New Machine Button - Only creates new machine (no "ekle")
             OutlinedButton(
                 onClick = { showMachineTitleDialog = true },
                 modifier = Modifier.weight(1f),
@@ -245,7 +250,7 @@ fun GeneralControlScreen(
             ) {
                 Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("+ Yeni Makina Ekle")
+                Text("Yeni Makina")
             }
             
             // Load Saved Machines Button (machines with saved control data)
@@ -260,6 +265,21 @@ fun GeneralControlScreen(
                 Spacer(modifier = Modifier.width(4.dp))
                 Text("Kayıtlı (${savedMachineControls.size})")
             }
+        }
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // Machine List Management Button
+        OutlinedButton(
+            onClick = { showMachineListManagementDialog = true },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = themeColors.textSecondary
+            )
+        ) {
+            Icon(Icons.Default.Settings, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(4.dp))
+            Text("Makina Listesi Yönetimi")
         }
         
         Spacer(modifier = Modifier.height(16.dp))
@@ -625,9 +645,10 @@ fun GeneralControlScreen(
         }
     }
     
-    // Machine Title Dialog
+    // Machine Title Dialog - Now shows saved machine names for quick selection
     if (showMachineTitleDialog) {
         MachineTitleDialog(
+            savedMachineNames = savedMachineNames,
             onDismiss = { showMachineTitleDialog = false },
             onSave = { title ->
                 currentMachineTitle = title
@@ -639,6 +660,20 @@ fun GeneralControlScreen(
                 // Save machine name as template
                 machineNameViewModel.saveMachineName(title)
                 Toast.makeText(context, "Makina oluşturuldu: $title", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+    
+    // Machine List Management Dialog - Add/Delete machine names
+    if (showMachineListManagementDialog) {
+        MachineListManagementDialog(
+            machineNames = savedMachineNames,
+            onDismiss = { showMachineListManagementDialog = false },
+            onAddMachine = { name ->
+                machineNameViewModel.saveMachineName(name)
+            },
+            onDeleteMachine = { id ->
+                machineNameViewModel.deleteMachineName(id)
             }
         )
     }
@@ -1076,6 +1111,7 @@ private fun ControlItemCard(
 
 @Composable
 private fun MachineTitleDialog(
+    savedMachineNames: List<MachineName>,
     onDismiss: () -> Unit,
     onSave: (String) -> Unit
 ) {
@@ -1086,20 +1122,75 @@ private fun MachineTitleDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Yeni Makina Oluştur",
+                text = "Yeni Makina",
                 color = themeColors.primary,
                 fontWeight = FontWeight.Bold
             )
         },
         text = {
-            Column {
-                Text(
-                    text = "Makina/başlık adını girin:",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = themeColors.textSecondary
-                )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 400.dp)
+            ) {
+                // Show saved machine names list if available
+                if (savedMachineNames.isNotEmpty()) {
+                    Text(
+                        text = "Kayıtlı makinalardan seçin:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = themeColors.textSecondary
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 200.dp)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        savedMachineNames.forEach { machineName ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onSave(machineName.name) }
+                                    .padding(vertical = 10.dp, horizontal = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Build,
+                                    contentDescription = null,
+                                    tint = themeColors.primary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = machineName.name,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = themeColors.textPrimary,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                            Divider(color = themeColors.glassBorder.copy(alpha = 0.5f))
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Text(
+                        text = "veya yeni makina adı girin:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = themeColors.textSecondary
+                    )
+                } else {
+                    Text(
+                        text = "Makina adını girin:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = themeColors.textSecondary
+                    )
+                }
                 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 
                 OutlinedTextField(
                     value = title,
@@ -1131,6 +1222,220 @@ private fun MachineTitleDialog(
         },
         containerColor = themeColors.surface
     )
+}
+
+/**
+ * Machine List Management Dialog - Add and delete machine names
+ */
+@Composable
+private fun MachineListManagementDialog(
+    machineNames: List<MachineName>,
+    onDismiss: () -> Unit,
+    onAddMachine: (String) -> Unit,
+    onDeleteMachine: (Long) -> Unit
+) {
+    val themeColors = LocalThemeColors.current
+    var newMachineName by remember { mutableStateOf("") }
+    var showDeleteConfirmation by remember { mutableStateOf<MachineName?>(null) }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = null,
+                    tint = themeColors.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Makina Listesi Yönetimi",
+                    color = themeColors.primary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 450.dp)
+            ) {
+                // Add new machine section
+                Text(
+                    text = "Yeni makina ekle:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = themeColors.textSecondary
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = newMachineName,
+                        onValueChange = { newMachineName = it },
+                        placeholder = { Text("Makina adı") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = themeColors.primary,
+                            unfocusedBorderColor = themeColors.glassBorder
+                        )
+                    )
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
+                    FilledTonalButton(
+                        onClick = {
+                            if (newMachineName.isNotBlank()) {
+                                onAddMachine(newMachineName.trim())
+                                newMachineName = ""
+                            }
+                        },
+                        enabled = newMachineName.isNotBlank(),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = themeColors.primary.copy(alpha = 0.2f),
+                            contentColor = themeColors.primary
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Ekle",
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Divider(color = themeColors.glassBorder)
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Machine list section
+                Text(
+                    text = "Kayıtlı makinalar (${machineNames.size}):",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = themeColors.textSecondary
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                if (machineNames.isEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Build,
+                            contentDescription = null,
+                            tint = themeColors.textDisabled,
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Henüz makina eklenmedi",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = themeColors.textDisabled
+                        )
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 250.dp)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        machineNames.forEach { machineName ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Build,
+                                    contentDescription = null,
+                                    tint = themeColors.primary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = machineName.name,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = themeColors.textPrimary,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                IconButton(
+                                    onClick = { showDeleteConfirmation = machineName }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Sil",
+                                        tint = themeColors.error,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                            Divider(color = themeColors.glassBorder.copy(alpha = 0.5f))
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(containerColor = themeColors.primary)
+            ) {
+                Text("Tamam")
+            }
+        },
+        containerColor = themeColors.surface
+    )
+    
+    // Delete confirmation dialog
+    showDeleteConfirmation?.let { machineToDelete ->
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = null },
+            title = {
+                Text(
+                    text = "Makina Sil",
+                    color = themeColors.error,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = "\"${machineToDelete.name}\" makinesini silmek istediğinizden emin misiniz?",
+                    color = themeColors.textSecondary
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDeleteMachine(machineToDelete.id)
+                        showDeleteConfirmation = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.error)
+                ) {
+                    Text("Sil")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmation = null }) {
+                    Text("İptal", color = themeColors.textSecondary)
+                }
+            },
+            containerColor = themeColors.surface
+        )
+    }
 }
 
 @Composable
