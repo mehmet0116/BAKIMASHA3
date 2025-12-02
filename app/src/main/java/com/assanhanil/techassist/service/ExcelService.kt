@@ -76,9 +76,10 @@ class ExcelService(private val context: Context) {
         title: String = "İş Emri - Yapılacak İşler"
     ): XSSFSheet {
         // Check if sheet already exists
-        val existingSheet = workbook.getSheet(sheetName)
+        // Since we're working with XSSFWorkbook, getSheet will always return XSSFSheet or null
+        val existingSheet = workbook.getSheet(sheetName) as? XSSFSheet
         if (existingSheet != null) {
-            return existingSheet as XSSFSheet
+            return existingSheet
         }
         
         // Create new sheet with corporate header
