@@ -147,6 +147,9 @@ fun GeneralControlScreen(
     // Track if current machine should be cleared after export
     var clearCurrentAfterExport by remember { mutableStateOf(false) }
     
+    // Track which saved machine IDs should be cleared after export
+    var machineIdsToCleanupAfterExport by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    
     // Permission launcher
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -242,7 +245,7 @@ fun GeneralControlScreen(
             ) {
                 Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Yeni Makina")
+                Text("+ Yeni Makina Ekle")
             }
             
             // Load Saved Machines Button (machines with saved control data)
@@ -607,7 +610,7 @@ fun GeneralControlScreen(
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            // Merge All Button
+            // Merge All and Send Button
             Button(
                 onClick = { showMergeDialog = true },
                 modifier = Modifier.fillMaxWidth(),
@@ -617,7 +620,7 @@ fun GeneralControlScreen(
             ) {
                 Icon(Icons.Default.MergeType, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Hepsini Birleştir")
+                Text("Hepsini birleştir ve gönder")
             }
         }
     }
@@ -813,6 +816,9 @@ fun GeneralControlScreen(
                         // Mark that we should clear data after export
                         clearCurrentAfterExport = includeCurrentMachine
                         
+                        // Track which saved machine IDs to clear after successful export
+                        machineIdsToCleanupAfterExport = selectedMachinesForMerge.toSet()
+                        
                         showMergeDialog = false
                         
                         // Show signature dialog if there are operators, otherwise show no-operators dialog
@@ -895,24 +901,47 @@ fun GeneralControlScreen(
         SaveShareDialog(
             onDismiss = { 
                 showSaveLocationDialog = false
-                // Clear data after closing dialog (export completed)
+                // Clear all data after closing dialog (export completed)
+                // Clear current machine data
                 if (clearCurrentAfterExport) {
                     controlItems = emptyList()
                     nextItemId = 1
                     selectedOperatorIds = emptySet()
+                    currentMachineTitle = ""
+                    currentMachineId = 0
                     clearCurrentAfterExport = false
-                    Toast.makeText(context, "Kontrol verileri temizlendi", Toast.LENGTH_SHORT).show()
+                }
+                // Clear saved machine controls that were included in the merge
+                if (machineIdsToCleanupAfterExport.isNotEmpty()) {
+                    machineControlViewModel.deactivateMachineControlsByIds(
+                        machineControlIds = machineIdsToCleanupAfterExport.toList()
+                    ) {
+                        Toast.makeText(context, "Birleştirilmiş veriler temizlendi", Toast.LENGTH_SHORT).show()
+                    }
+                    machineIdsToCleanupAfterExport = emptySet()
+                    selectedMachinesForMerge = emptySet()
                 }
             },
             onSave = {
                 val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
                 createDocumentLauncher.launch("GenelKontrol_Birlesik_$timestamp.xlsx")
-                // Clear data after save
+                // Clear all data after save
+                // Clear current machine data
                 if (clearCurrentAfterExport) {
                     controlItems = emptyList()
                     nextItemId = 1
                     selectedOperatorIds = emptySet()
+                    currentMachineTitle = ""
+                    currentMachineId = 0
                     clearCurrentAfterExport = false
+                }
+                // Clear saved machine controls that were included in the merge
+                if (machineIdsToCleanupAfterExport.isNotEmpty()) {
+                    machineControlViewModel.deactivateMachineControlsByIds(
+                        machineControlIds = machineIdsToCleanupAfterExport.toList()
+                    )
+                    machineIdsToCleanupAfterExport = emptySet()
+                    selectedMachinesForMerge = emptySet()
                 }
             },
             onShare = {
@@ -920,13 +949,25 @@ fun GeneralControlScreen(
                     shareExcelFile(context, file)
                 }
                 showSaveLocationDialog = false
-                // Clear data after share
+                // Clear all data after share
+                // Clear current machine data
                 if (clearCurrentAfterExport) {
                     controlItems = emptyList()
                     nextItemId = 1
                     selectedOperatorIds = emptySet()
+                    currentMachineTitle = ""
+                    currentMachineId = 0
                     clearCurrentAfterExport = false
-                    Toast.makeText(context, "Kontrol verileri temizlendi", Toast.LENGTH_SHORT).show()
+                }
+                // Clear saved machine controls that were included in the merge
+                if (machineIdsToCleanupAfterExport.isNotEmpty()) {
+                    machineControlViewModel.deactivateMachineControlsByIds(
+                        machineControlIds = machineIdsToCleanupAfterExport.toList()
+                    ) {
+                        Toast.makeText(context, "Birleştirilmiş veriler temizlendi", Toast.LENGTH_SHORT).show()
+                    }
+                    machineIdsToCleanupAfterExport = emptySet()
+                    selectedMachinesForMerge = emptySet()
                 }
             }
         )

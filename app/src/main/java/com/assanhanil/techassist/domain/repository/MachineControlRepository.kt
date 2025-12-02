@@ -43,4 +43,16 @@ interface MachineControlRepository {
      * Deactivate a machine control (soft delete).
      */
     suspend fun deactivateMachineControl(machineControlId: Long)
+
+    /**
+     * Deactivate all active machine controls (soft delete all).
+     * Used after merging and exporting reports to clear temporary records.
+     */
+    suspend fun deactivateAllMachineControls()
+
+    /**
+     * Deactivate specific machine controls by their IDs (soft delete batch).
+     * Used after merging and exporting selected machine controls.
+     */
+    suspend fun deactivateMachineControlsByIds(machineControlIds: List<Long>)
 }

@@ -154,6 +154,46 @@ class MachineControlViewModel(
     }
 
     /**
+     * Deactivate all active machine controls (soft delete all).
+     * Used after successfully merging and exporting all data to clear the temporary records.
+     * The exported report is already saved in the Reports section.
+     */
+    fun deactivateAllMachineControls(onSuccess: () -> Unit = {}) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                machineControlRepository.deactivateAllMachineControls()
+                _error.value = null
+                onSuccess()
+            } catch (e: Exception) {
+                _error.value = "Makina kontrolleri temizlenirken hata oluştu: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    /**
+     * Deactivate specific machine controls by their IDs (soft delete batch).
+     * Used after successfully merging and exporting selected machine controls.
+     * Only the merged machines are cleared, others remain intact.
+     */
+    fun deactivateMachineControlsByIds(machineControlIds: List<Long>, onSuccess: () -> Unit = {}) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                machineControlRepository.deactivateMachineControlsByIds(machineControlIds)
+                _error.value = null
+                onSuccess()
+            } catch (e: Exception) {
+                _error.value = "Makina kontrolleri temizlenirken hata oluştu: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    /**
      * Clear selected machine control.
      */
     fun clearSelection() {
