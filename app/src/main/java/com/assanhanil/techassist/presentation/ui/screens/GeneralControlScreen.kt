@@ -2185,9 +2185,9 @@ private suspend fun exportMergedToExcel(
         
         // Create "Yapılacak İşler" sheet for work order items (from partition above)
         if (workOrderItems.isNotEmpty()) {
-            val workOrderSheet = excelService.createSheetWithHeader(
+            val workOrderSheet = excelService.getOrCreateWorkOrderSheet(
                 workbook = workbook,
-                sheetName = "Yapılacak İşler",
+                sheetName = ExcelService.WORK_ORDER_SHEET_NAME,
                 title = "İş Emri - Yapılacak İşler"
             )
             
@@ -2439,9 +2439,9 @@ private suspend fun exportMergedToExcelWithSignatures(
         
         // Create "Yapılacak İşler" sheet for work order items
         if (workOrderItems.isNotEmpty()) {
-            val workOrderSheet = excelService.createSheetWithHeader(
+            val workOrderSheet = excelService.getOrCreateWorkOrderSheet(
                 workbook = workbook,
-                sheetName = "Yapılacak İşler",
+                sheetName = ExcelService.WORK_ORDER_SHEET_NAME,
                 title = "İş Emri - Yapılacak İşler"
             )
             
