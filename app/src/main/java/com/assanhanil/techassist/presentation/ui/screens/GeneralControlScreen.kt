@@ -660,6 +660,9 @@ fun GeneralControlScreen(
                 // Save machine name as template
                 machineNameViewModel.saveMachineName(title)
                 Toast.makeText(context, "Makina oluşturuldu: $title", Toast.LENGTH_SHORT).show()
+            },
+            onDeleteMachine = { id ->
+                machineNameViewModel.deleteMachineName(id)
             }
         )
     }
@@ -1113,10 +1116,12 @@ private fun ControlItemCard(
 private fun MachineTitleDialog(
     savedMachineNames: List<MachineName>,
     onDismiss: () -> Unit,
-    onSave: (String) -> Unit
+    onSave: (String) -> Unit,
+    onDeleteMachine: (Long) -> Unit
 ) {
     val themeColors = LocalThemeColors.current
     var title by remember { mutableStateOf("") }
+    var showDeleteConfirmation by remember { mutableStateOf<MachineName?>(null) }
     
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1154,7 +1159,7 @@ private fun MachineTitleDialog(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable { onSave(machineName.name) }
-                                    .padding(vertical = 10.dp, horizontal = 4.dp),
+                                    .padding(vertical = 4.dp, horizontal = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
@@ -1168,8 +1173,19 @@ private fun MachineTitleDialog(
                                     text = machineName.name,
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = themeColors.textPrimary,
-                                    fontWeight = FontWeight.Medium
+                                    fontWeight = FontWeight.Medium,
+                                    modifier = Modifier.weight(1f)
                                 )
+                                IconButton(
+                                    onClick = { showDeleteConfirmation = machineName }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Sil",
+                                        tint = themeColors.error,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                             }
                             Divider(color = themeColors.glassBorder.copy(alpha = 0.5f))
                         }
@@ -1222,6 +1238,43 @@ private fun MachineTitleDialog(
         },
         containerColor = themeColors.surface
     )
+    
+    // Delete confirmation dialog
+    showDeleteConfirmation?.let { machineToDelete ->
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = null },
+            title = {
+                Text(
+                    text = "Makina Sil",
+                    color = themeColors.error,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = "\"${machineToDelete.name}\" makinesini silmek istediğinizden emin misiniz?",
+                    color = themeColors.textSecondary
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDeleteMachine(machineToDelete.id)
+                        showDeleteConfirmation = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = themeColors.error)
+                ) {
+                    Text("Sil")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmation = null }) {
+                    Text("İptal", color = themeColors.textSecondary)
+                }
+            },
+            containerColor = themeColors.surface
+        )
+    }
 }
 
 /**
