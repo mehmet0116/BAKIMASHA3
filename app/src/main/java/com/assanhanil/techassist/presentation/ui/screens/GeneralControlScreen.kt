@@ -36,6 +36,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.assanhanil.techassist.domain.model.ControlItemData
 import com.assanhanil.techassist.domain.model.MachineControl
+import com.assanhanil.techassist.domain.model.MachineName
 import com.assanhanil.techassist.domain.model.Operator
 import com.assanhanil.techassist.domain.model.SecurityStatus
 import com.assanhanil.techassist.presentation.ui.components.GlassCard
@@ -1110,7 +1111,7 @@ private fun ControlItemCard(
 
 @Composable
 private fun MachineTitleDialog(
-    savedMachineNames: List<com.assanhanil.techassist.domain.model.MachineName>,
+    savedMachineNames: List<MachineName>,
     onDismiss: () -> Unit,
     onSave: (String) -> Unit
 ) {
@@ -1228,14 +1229,14 @@ private fun MachineTitleDialog(
  */
 @Composable
 private fun MachineListManagementDialog(
-    machineNames: List<com.assanhanil.techassist.domain.model.MachineName>,
+    machineNames: List<MachineName>,
     onDismiss: () -> Unit,
     onAddMachine: (String) -> Unit,
     onDeleteMachine: (Long) -> Unit
 ) {
     val themeColors = LocalThemeColors.current
     var newMachineName by remember { mutableStateOf("") }
-    var showDeleteConfirmation by remember { mutableStateOf<com.assanhanil.techassist.domain.model.MachineName?>(null) }
+    var showDeleteConfirmation by remember { mutableStateOf<MachineName?>(null) }
     
     AlertDialog(
         onDismissRequest = onDismiss,
