@@ -25,22 +25,6 @@ import kotlin.math.min
  */
 class ExcelService(private val context: Context) {
 
-    companion object {
-        // Excel dimension constants
-        private const val COLUMN_WIDTH_UNIT = 256 // Excel column width unit
-        private const val DEFAULT_COLUMN_WIDTH = 15 * COLUMN_WIDTH_UNIT
-        private const val IMAGE_COLUMN_WIDTH = 50 * COLUMN_WIDTH_UNIT
-        
-        // Row height in twips (1/20 of a point)
-        private const val DEFAULT_ROW_HEIGHT: Short = 400
-        private const val HEADER_ROW_HEIGHT: Short = 600
-        private const val IMAGE_ROW_HEIGHT: Short = 3000 // ~150 points for images
-        
-        // Image processing
-        private const val MAX_IMAGE_SIZE_KB = 500
-        private const val MAX_IMAGE_DIMENSION = 800
-    }
-
     /**
      * Creates a new Excel workbook with corporate styling.
      */
@@ -72,6 +56,52 @@ class ExcelService(private val context: Context) {
         createCorporateHeader(workbook, sheet, title)
         
         return sheet
+    }
+
+    /**
+     * Gets an existing sheet by name or creates a new one with corporate header.
+     * This is the main method for creating the "Yapılacak İşler" (Work Orders) sheet.
+     * 
+     * If a sheet with the same name already exists, it will be returned and reused.
+     * If it does not exist, a new sheet will be created with the specified name and header.
+     * 
+     * @param workbook The workbook to get or add the sheet to
+     * @param sheetName Name of the sheet (default: "Yapılacak İşler")
+     * @param title Report title to display in header
+     * @return The existing or newly created sheet
+     */
+    fun getOrCreateWorkOrderSheet(
+        workbook: XSSFWorkbook,
+        sheetName: String = WORK_ORDER_SHEET_NAME,
+        title: String = "İş Emri - Yapılacak İşler"
+    ): XSSFSheet {
+        // Check if sheet already exists
+        val existingSheet = workbook.getSheet(sheetName)
+        if (existingSheet != null) {
+            return existingSheet as XSSFSheet
+        }
+        
+        // Create new sheet with corporate header
+        return createSheetWithHeader(workbook, sheetName, title)
+    }
+
+    companion object {
+        // Excel dimension constants
+        private const val COLUMN_WIDTH_UNIT = 256 // Excel column width unit
+        private const val DEFAULT_COLUMN_WIDTH = 15 * COLUMN_WIDTH_UNIT
+        private const val IMAGE_COLUMN_WIDTH = 50 * COLUMN_WIDTH_UNIT
+        
+        // Row height in twips (1/20 of a point)
+        private const val DEFAULT_ROW_HEIGHT: Short = 400
+        private const val HEADER_ROW_HEIGHT: Short = 600
+        private const val IMAGE_ROW_HEIGHT: Short = 3000 // ~150 points for images
+        
+        // Image processing
+        private const val MAX_IMAGE_SIZE_KB = 500
+        private const val MAX_IMAGE_DIMENSION = 800
+        
+        // Work order sheet name constant
+        const val WORK_ORDER_SHEET_NAME = "Yapılacak İşler"
     }
 
     /**

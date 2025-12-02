@@ -837,9 +837,9 @@ private suspend fun exportWorkOrdersToExcel(
     val tempFilesMap = mutableMapOf<Int, File>()
     
     // Create "Yapılacak İşler" sheet at the beginning alongside main sheet
-    val yapilacakIslerSheet = excelService.createSheetWithHeader(
+    val yapilacakIslerSheet = excelService.getOrCreateWorkOrderSheet(
         workbook = workbook,
-        sheetName = "Yapılacak İşler",
+        sheetName = ExcelService.WORK_ORDER_SHEET_NAME,
         title = "Yapılacak İşler Detay"
     )
     
@@ -1079,9 +1079,9 @@ private suspend fun exportWorkOrdersToExcelWithSignatures(
     val signatureTempFiles = mutableListOf<File>()
     
     // Create "Yapılacak İşler" sheet at the beginning alongside main sheet
-    val yapilacakIslerSheet = excelService.createSheetWithHeader(
+    val yapilacakIslerSheet = excelService.getOrCreateWorkOrderSheet(
         workbook = workbook,
-        sheetName = "Yapılacak İşler",
+        sheetName = ExcelService.WORK_ORDER_SHEET_NAME,
         title = "Yapılacak İşler Detay"
     )
     
