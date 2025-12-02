@@ -302,8 +302,6 @@ fun DrawerContent(
             Screen.Reports,
             Screen.ExcelTemplateBuilder,
             Screen.GeneralControl,
-            Screen.WorkOrder,
-            Screen.Camera,
             Screen.Settings
         )
         
