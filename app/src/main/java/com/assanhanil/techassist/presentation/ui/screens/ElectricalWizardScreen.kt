@@ -1,6 +1,7 @@
 package com.assanhanil.techassist.presentation.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,17 +20,29 @@ import androidx.compose.ui.unit.dp
 import com.assanhanil.techassist.presentation.ui.components.GlassCard
 import com.assanhanil.techassist.presentation.ui.components.NeonCard
 import com.assanhanil.techassist.presentation.ui.theme.LocalThemeColors
+import kotlin.math.PI
+import kotlin.math.acos
+import kotlin.math.cos
 import kotlin.math.pow
+import kotlin.math.sin
 import kotlin.math.sqrt
 
 /**
- * Electrical Wizard Screen - Electrical calculations and cable sizing.
+ * Electrical Wizard Screen - Comprehensive electrical calculations and engineering tools.
  * 
  * Features:
- * - Cable sizing calculator
- * - Voltage drop calculator
- * - Power factor calculations
- * - Ohm's Law calculator
+ * - Ohm's Law Calculator (V = I × R)
+ * - Power Calculator (P, Q, S calculations with power factor)
+ * - Cable Sizing Calculator (current capacity & voltage drop)
+ * - Motor Current Calculator (single/three phase motors)
+ * - Transformer Calculator (voltage/current transformations)
+ * - Capacitor Calculator (power factor correction)
+ * - Short Circuit Calculator (fault current analysis)
+ * - Circuit Breaker/Fuse Selector
+ * - Motor Starting Calculator (DOL, Star-Delta, VFD)
+ * - Energy Consumption Calculator (kWh & cost analysis)
+ * - Earthing/Grounding Calculator
+ * - Lighting Calculator (lux calculations)
  */
 @Composable
 fun ElectricalWizardScreen(
@@ -37,6 +50,21 @@ fun ElectricalWizardScreen(
 ) {
     val themeColors = LocalThemeColors.current
     var selectedCalculator by remember { mutableStateOf(0) }
+    
+    val calculatorTabs = listOf(
+        "Ohm Yasası",
+        "Güç",
+        "Kablo",
+        "Motor Akım",
+        "Trafo",
+        "Kapasitör",
+        "Kısa Devre",
+        "Sigorta",
+        "Yol Verme",
+        "Enerji",
+        "Topraklama",
+        "Aydınlatma"
+    )
     
     Column(
         modifier = modifier
@@ -47,7 +75,7 @@ fun ElectricalWizardScreen(
     ) {
         // Header
         Text(
-            text = "Elektrik Sihirbazı",
+            text = "⚡ Elektrik Sihirbazı",
             style = MaterialTheme.typography.headlineSmall,
             color = themeColors.primary,
             fontWeight = FontWeight.Bold
@@ -56,36 +84,28 @@ fun ElectricalWizardScreen(
         Spacer(modifier = Modifier.height(8.dp))
         
         Text(
-            text = "Elektrik hesaplamaları ve kablo boyutlandırma",
+            text = "Kapsamlı elektrik hesaplamaları ve mühendislik araçları",
             style = MaterialTheme.typography.bodyMedium,
             color = themeColors.textSecondary
         )
         
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
         
-        // Calculator Selection
+        // Calculator Selection - Horizontal scrollable tabs
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            CalculatorTab(
-                title = "Ohm",
-                isSelected = selectedCalculator == 0,
-                onClick = { selectedCalculator = 0 },
-                modifier = Modifier.weight(1f)
-            )
-            CalculatorTab(
-                title = "Güç",
-                isSelected = selectedCalculator == 1,
-                onClick = { selectedCalculator = 1 },
-                modifier = Modifier.weight(1f)
-            )
-            CalculatorTab(
-                title = "Kablo",
-                isSelected = selectedCalculator == 2,
-                onClick = { selectedCalculator = 2 },
-                modifier = Modifier.weight(1f)
-            )
+            calculatorTabs.forEachIndexed { index, title ->
+                CalculatorTab(
+                    title = title,
+                    isSelected = selectedCalculator == index,
+                    onClick = { selectedCalculator = index },
+                    modifier = Modifier.wrapContentWidth()
+                )
+            }
         }
         
         Spacer(modifier = Modifier.height(24.dp))
@@ -95,6 +115,15 @@ fun ElectricalWizardScreen(
             0 -> OhmLawCalculator()
             1 -> PowerCalculator()
             2 -> CableSizeCalculator()
+            3 -> MotorCurrentCalculator()
+            4 -> TransformerCalculator()
+            5 -> CapacitorCalculator()
+            6 -> ShortCircuitCalculator()
+            7 -> CircuitBreakerSelector()
+            8 -> MotorStartingCalculator()
+            9 -> EnergyConsumptionCalculator()
+            10 -> EarthingCalculator()
+            11 -> LightingCalculator()
         }
     }
 }
