@@ -552,7 +552,7 @@ fun GeneralControlScreen(
             ) {
                 Icon(Icons.Default.Send, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Gönder")
+                Text("Birleştir ve Gönder")
             }
         }
     }
@@ -1089,7 +1089,7 @@ private fun ExportDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Gönderim",
+                text = "Birleştir ve Gönder",
                 color = themeColors.primary,
                 fontWeight = FontWeight.Bold
             )
@@ -1176,7 +1176,7 @@ private fun ExportDialog(
             ) {
                 Icon(Icons.Default.Send, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Gönder")
+                Text("Birleştir ve Gönder")
             }
         },
         dismissButton = {
